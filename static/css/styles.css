@@ -124,6 +124,10 @@ td.notConnected {
 	padding-left: 20px;
 }
 
+#firewalls td {
+	vertical-align: top;
+}
+
 #button-bar {
 	float: right;
 	margin-top: 0;
