@@ -73,8 +73,8 @@ td.notConnected {
 	margin-left: 10px;
 }
 
-table#firewalls {
-	width: 100% !important;
+#firewalls_wrapper {
+	min-width: 900px;
 }
 
 #header {
@@ -161,6 +161,8 @@ table#firewalls {
 	padding-bottom: 25px;
 	margin-top: 100px;
 	margin-left: 100px;
+	padding-right: 10px;
+	white-space: pre-wrap;
 }
 
 /* The Close Button */

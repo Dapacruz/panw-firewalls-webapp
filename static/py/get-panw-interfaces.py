@@ -105,7 +105,10 @@ def print_results(args, results):
         print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"IpAddress" :20}', file=sys.stdout)
         print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 20 :20}', file=sys.stdout)
 
+    current_hostname = ''
     for hostname, ifname, state, ip in results:
+        if not current_hostname:
+            current_hostname = hostname
         if args.terse:
             try:
                 ip = re.match(regex, ip).group(1)
@@ -114,8 +117,12 @@ def print_results(args, results):
             if not args.if_state or args.if_state == state:
                 print(ip)
         else:
+            # Insert a newline between hosts
+            if current_hostname != hostname:
+                print()
             if not args.if_state or args.if_state == state:
                 print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{ip :20}')
+            current_hostname = hostname
 
 
 def worker(args, host):
