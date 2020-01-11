@@ -20,7 +20,7 @@ func (c *MainController) Get() {
 }
 
 func (c *MainController) Post() {
-	stdout, err := exec.Command("get-panw-firewalls", "--raw-output").Output()
+	stdout, err := exec.Command("static/py/get-panw-firewalls.py", "--raw-output").Output()
 	if err != nil {
 		fmt.Println(err)
 	}

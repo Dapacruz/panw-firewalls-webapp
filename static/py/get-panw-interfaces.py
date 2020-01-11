@@ -130,6 +130,8 @@ def worker(args, host):
 
     if args.raw_output:
         root = ET.fromstring(xml)
+
+        # Insert hostname into the response
         hostname = ET.Element('hostname')
         hostname.text = host
         root.insert(0, hostname)
