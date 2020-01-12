@@ -27,6 +27,10 @@ a:hover {
 	color: #a7c438;
 }
 
+#firewalls_wrapper {
+	min-width: 1200px;
+}
+
 td {
 	text-align: center;
 }
@@ -61,7 +65,7 @@ td.notConnected {
 }
 
 .dt-buttons {
-	float: right;
+	float: right !important;
 }
 
 #events {
@@ -69,12 +73,8 @@ td.notConnected {
 	text-align: center;
 	font-size: 1.2em;
 	font-weight: 900;
-	margin-top: 30px;
+	margin-bottom: 30px;
 	margin-left: 10px;
-}
-
-#firewalls_wrapper {
-	min-width: 900px;
 }
 
 .noscroll {
@@ -206,4 +206,8 @@ td.notConnected {
 	margin: auto;
 	height: 35px;
 	width: 400px;
+}
+
+.hide {
+	display: none;
 }
