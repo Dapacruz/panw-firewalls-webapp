@@ -61,6 +61,7 @@ $(document).ready(function() {
 		$('body').toggleClass('noscroll');
 		$('#results-overlay').attr('style', 'display: none;');
 		$('#results').removeAttr('style');
+		$('#results-filter input').val('');
 	});
 
 	// When the user clicks anywhere outside of the modal, close it
@@ -69,6 +70,7 @@ $(document).ready(function() {
 			$('body').toggleClass('noscroll');
 			$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
 			$('#results').removeAttr('style');
+			$('#results-filter input').val('');
 		}
 	});
 
@@ -94,14 +96,14 @@ $(document).ready(function() {
 		// Retrieve the input field text and reset the count to zero
 		var filter = $(this).val(),
 			count = 0;
-		// Loop through the comment list
+
 		$('#results-body div').contents().each(function() {
-			// If the list item does not contain the text phrase fade it out
+			// If the list item does not contain the text hide it
 			if ($(this).text().search(new RegExp(filter, 'i')) < 0) {
-				$(this).parent().hide(); // MY CHANGE
+				$(this).parent().hide();
 			} else {
 				// Show the list item if the phrase matches and increase the count by 1
-				$(this).parent().show(); // MY CHANGE
+				$(this).parent().show();
 				count++;
 			}
 		});
