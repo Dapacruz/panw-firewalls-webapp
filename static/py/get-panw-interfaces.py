@@ -101,7 +101,6 @@ def print_results(args, results):
 
     # Print header
     if not args.terse:
-        print('\n')
         print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"IpAddress" :20}', file=sys.stdout)
         print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 20 :20}', file=sys.stdout)
 
