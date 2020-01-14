@@ -1,5 +1,5 @@
-// TODO: Implement get-panw-config
 // TODO: Add a tags column
+// TODO: Fix Chrome issue with modal ctrl+a
 
 var table;
 var tableData = [];
@@ -20,12 +20,6 @@ var env = (function() {
 })();
 
 $(document).ready(function() {
-	// Add column search
-	$('#firewalls thead th').each(function() {
-		var title = $(this).text();
-		$(this).html(`<label>${title}</label><br><input class="searchInput" type="search" placeholder="" />`);
-	});
-
 	getFirewalls();
 
 	$('#get-api-key').click(() => {
@@ -38,23 +32,6 @@ $(document).ready(function() {
 			$('#get-api-key').click();
 		}
 	});
-
-	// $('#clear-search').click(() => {
-	// 	$('#clear-search').parent().removeAttr('style');
-	// 	clearSearch();
-	// });
-
-	// $('#select-all-rows').click(() => {
-	// 	table.rows().select();
-	// 	$('#select-all-rows').parent().attr('style', 'display: none;');
-	// 	$('#deselect-all-rows').parent().removeAttr('style');
-	// });
-
-	// $('#deselect-all-rows').click(() => {
-	// 	table.rows().deselect();
-	// 	$('#deselect-all-rows').parent().attr('style', 'display: none;');
-	// 	$('#select-all-rows').parent().removeAttr('style');
-	// });
 
 	// When the user clicks on <span> (x), close the modal
 	$('span.close').click(() => {
@@ -75,7 +52,7 @@ $(document).ready(function() {
 	});
 
 	// Limit ctrl/cmd+a selection to results overlay
-	$('#results').keydown(function(e) {
+	$('.modal-content').keydown(function(e) {
 		if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
 			e.preventDefault();
 			selectText('results');
@@ -84,7 +61,7 @@ $(document).ready(function() {
 
 	// Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
 	$(document).keydown(function(e) {
-		if ($('#results').is(':hover')) {
+		if ($('.modal-content:hover').length != 0) {
 			if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
 				e.preventDefault();
 				selectText('results');
@@ -92,7 +69,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$('#results-filter input').on('keyup change', function() {
+	$('#results-filter input').on('keyup change clear', function() {
 		// Retrieve the input field text and reset the count to zero
 		var filter = $(this).val(),
 			count = 0;
@@ -251,6 +228,75 @@ function runCommand() {
 	});
 }
 
+function getConfig(format) {
+	var username = $('#username').val();
+	var password = $('#password').val();
+	var checkbox = $('.toggler');
+	checkbox.prop('checked', !checkbox.prop('checked'));
+
+	if (!apiKey) {
+		window.alert('You need to log in to execute this action');
+		return;
+	}
+
+	var hostnames = [];
+	table.rows({ selected: true }).data().each((row) => {
+		var hostname = $.parseHTML(row.hostname)[0].innerText;
+		hostnames.push(hostname);
+	});
+
+	if (hostnames.length == 0) {
+		window.alert('Please select the rows this action should be applied to');
+		return;
+	}
+
+	$('#loading-message').attr('style', 'display: block;');
+
+	$.ajax({
+		url: '/get/config',
+		type: 'POST',
+		data: `format=${format}&username=${username}&password=${password}&key=${apiKey}&firewalls=${hostnames.join(
+			' '
+		)}`,
+		dataType: 'text',
+		success: function(response) {
+			// Wrap all lines and replace empty lines with a <br>
+			var modifiedResponse = [];
+			response.split('\n').forEach(function(val) {
+				if (val == '') {
+					modifiedResponse.push(`<br>`);
+				} else if (val.indexOf('=') == 0) {
+					modifiedResponse.push(`${val}<br>`);
+				} else {
+					val = val.replace(/&/g, '&amp;');
+					// val = val.replace('///g', '&#47;');
+					val = val.replace(/b'</, '&lt;');
+					val = val.replace(/>'/, '&gt;');
+					val = val.replace(/>/g, '&gt;');
+					val = val.replace(/</g, '&lt;');
+					modifiedResponse.push(`<div>${String(val)}</div>`);
+				}
+			});
+
+			// Wrap response
+			modifiedResponse[0] = `<div id="results-body">${modifiedResponse[0]}`;
+			modifiedResponse[-1] = `${modifiedResponse[-1]}</div>`;
+
+			$('#results').html(modifiedResponse.join(''));
+
+			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
+			$('#results-overlay').attr('style', 'display: block;');
+			$('body').toggleClass('noscroll');
+			$('#loading-message').attr('style', 'display: none;');
+		},
+		error: function(xhr, status, error) {
+			$(body).toggleClass('noscroll');
+			$('#loading-message').attr('style', 'display: none;');
+			window.alert('Something went seriously wrong');
+		}
+	});
+}
+
 function clearSearch() {
 	$('.searchInput').each(function() {
 		this.value = '';
@@ -312,6 +358,8 @@ function getFirewalls() {
 				});
 				var uptime = $(this).children('uptime').text();
 				var swVersion = $(this).children('sw-version').text();
+				var haState = $(this).children('ha').children('state').text();
+				haState = `${haState.charAt(0).toUpperCase()}${haState.slice(1)}`;
 
 				var vSystems = [];
 				$(this).children('vsys').children('entry').each(function() {
@@ -333,6 +381,7 @@ function getFirewalls() {
 						connected: connected,
 						uptime: uptime,
 						swVersion: swVersion,
+						haState: haState,
 						vSystems: vSystems
 					});
 				}
@@ -340,6 +389,17 @@ function getFirewalls() {
 
 			if (!tableInitialized) {
 				tableInitialized = true;
+
+				// Add column search
+				$('#firewalls thead th').each(function() {
+					var title = $(this).text();
+					$(this).html(
+						`<label>${title}</label><br><input class="searchInput" type="search" placeholder="" />`
+					);
+				});
+
+				// Delay showing the thead prematurely
+				$('#firewalls thead').show();
 
 				table = $('#firewalls').DataTable({
 					data: tableData,
@@ -352,6 +412,7 @@ function getFirewalls() {
 						{ data: 'connected' },
 						{ data: 'uptime' },
 						{ data: 'swVersion' },
+						{ data: 'haState' },
 						{ data: 'vSystems' }
 					],
 					fixedHeader: true,
@@ -473,6 +534,8 @@ function getFirewalls() {
 							<ul>
 							<li><a onclick="getInterfaces()">Get Interfaces</a></li>
 							<li><a onclick="runCommand()">Run Command</a></li>
+							<li><a onclick="getConfig('xml')">Get XML Config</a></li>
+							<li><a onclick="getConfig('set')">Get Set Config</a></li>
 							</ul>
 							</div>
 						</div>
