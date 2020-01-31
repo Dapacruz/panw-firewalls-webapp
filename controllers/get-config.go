@@ -29,6 +29,7 @@ func (c *GetConfig) Post() {
 
 	var cmd *exec.Cmd
 	if request.Format == "set" {
+		fmt.Println(request.Password)
 		cmd = exec.Command("static/py/get-panw-config.py", "--format", "set", "--user", request.Username, "--password", request.Password, request.Firewalls)
 	} else {
 		cmd = exec.Command("static/py/get-panw-config.py", "--format", "xml", "--key", request.Key, request.Firewalls)
@@ -41,7 +42,7 @@ func (c *GetConfig) Post() {
 		log.Fatal(err)
 	}
 
-	// fmt.Println("out:", out, "err:", errb.String())
+	// fmt.Println("out:", outb.String(), "err:", errb.String())
 
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }

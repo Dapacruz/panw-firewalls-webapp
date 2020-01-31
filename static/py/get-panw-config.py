@@ -141,11 +141,11 @@ def query_api(args, host):
     })
     url = f'https://{host}/api/?{params}'
     try:
-        with urllib.request.urlopen(url, context=ctx) as response:
+        with urllib.request.urlopen(url, timeout=30, context=ctx) as response:
             xml_config = response.read()
             xml_config = '\n'.join(str(xml_config).split('\\n'))
     except OSError as err:
-        sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
+        sys.stdout.write(f'{host}: Unable to connect to host ({err})\n\n')
         return
 
     print_config(xml_config, host)
@@ -171,8 +171,7 @@ def connect_ssh(args, settings, key_path, host):
         set_config = net_connect.send_command('set cli config-output-format set')
         set_config = net_connect.send_config_set(['show'])
     except Exception as e:
-        sys.stderr.write(f'Connection error ({host}): {e}')
-        sys.exit(1)
+        sys.stdout.write(f'Connection error ({host})\n\n')
     finally:
         net_connect.disconnect()
 

@@ -114,13 +114,13 @@
 
 .menu-wrap .menu > div {
 	background: var(--overlay-color);
-	width: 200px;
+	width: 250px;
 	height: 300px;
 	border-radius: 2%;
 	display: flex;
 	flex: none;
 	align-items: top;
-	padding-top: 20px;
+	padding-top: 25px;
 	justify-content: center;
 	opacity: 0;
 	transition: opacity 0.4s ease;

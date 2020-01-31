@@ -97,20 +97,21 @@ td.notConnected {
 	position: absolute;
 	top: 0;
 	right: 0;
-	margin-right: 5px;
+	margin-top: 10px;
+	margin-right: 10px;
 }
 
 #username,
 #password,
 #get-api-key {
-	margin-top: 5px;
 	display: inline-block;
 	vertical-align: middle;
 }
 
 #username,
 #password {
-	padding: 3px;
+	height: 28.2333px;
+	padding-left: 5px;
 }
 
 .ui-button,
@@ -157,7 +158,7 @@ td.notConnected {
 /* Modal Content */
 .modal-content {
 	margin: auto;
-	padding-right: 50px;
+	padding: 0;
 	border: 1px solid #888;
 	height: 100%;
 	overflow-y: scroll;
@@ -166,8 +167,36 @@ td.notConnected {
 	background-color: #fefefe;
 }
 
-.modal-content span {
-	margin-right: 10px;
+.modal-content #header {
+	top: 0;
+	margin-bottom: 25px;
+	padding-right: 10px;
+	padding-left: 5px;
+	position: sticky;
+	background-color: #fefefe;
+	border-bottom: 1px solid rgba(170, 170, 170, 0.6);
+}
+
+#results-filter {
+	display: inline-block;
+	vertical-align: bottom;
+	width: 100%;
+	height: 40px;
+}
+
+#results-filter input {
+	height: 28.2333px;
+}
+
+#results-filter-input,
+#results-filter-button {
+	float: left;
+	margin-top: 5px;
+	margin-right: 5px;
+}
+
+#results-filter-input {
+	padding-left: 5px;
 }
 
 .modal-content pre {
@@ -175,31 +204,8 @@ td.notConnected {
 	padding-bottom: 25px;
 	margin-top: 0;
 	margin-left: 100px;
-	padding-right: 10px;
+	padding-right: 50px;
 	white-space: pre-wrap;
-	overflow-y: scr;
-}
-.modal-content hr {
-	color: rgba(170, 170, 170, 0.6);
-	margin: 0;
-	margin-top: 55px;
-}
-
-#results-filter {
-	display: inline-block;
-	margin: 50px;
-	margin-bottom: 20px;
-	margin-left: 100px;
-}
-#results-filter input button {
-	display: inline-block;
-	vertical-align: middle;
-}
-
-#results-filter input {
-	margin-top: 1px;
-	padding-left: 5px;
-	min-height: 27px;
 }
 
 /* The Close Button */
@@ -208,8 +214,6 @@ td.notConnected {
 	float: right;
 	font-size: 28px;
 	font-weight: bold;
-	margin-top: 10px;
-	padding-right: 10px;
 }
 
 .close:hover,
@@ -219,7 +223,7 @@ td.notConnected {
 	cursor: pointer;
 }
 
-#loading-message {
+#loading-progressbar {
 	display: none;
 	position: fixed;
 	z-index: 1;
@@ -230,7 +234,7 @@ td.notConnected {
 	height: 100%;
 }
 
-#loading-message img {
+#loading-progressbar img {
 	display: block;
 	margin: auto;
 	height: 35px;
@@ -239,4 +243,18 @@ td.notConnected {
 
 .hide {
 	display: none;
+}
+
+tr.dtrg-start td {
+	padding: 4px !important;
+	padding-left: 8px !important;
+	text-align: left;
+	font-size: .75em;
+	font-weight: normal !important;
+}
+
+.end-table-group td {
+	padding: 0 !important;
+	background-color: rgb(179, 179, 179) !important;
+	height: 2px;
 }

@@ -11,10 +11,6 @@ type MainController struct {
 	beego.Controller
 }
 
-type GetFirewallRequest struct {
-	Request string `form:"request"`
-}
-
 func (c *MainController) Get() {
 	c.TplName = "index.html"
 }

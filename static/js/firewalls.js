@@ -1,5 +1,6 @@
-// TODO: Add a tags column
+// TODO: Look into grouping HA pairs
 // TODO: Fix Chrome issue with modal ctrl+a
+// TODO: Add get Panorama configuration feature
 
 var table;
 var tableData = [];
@@ -20,6 +21,10 @@ var env = (function() {
 })();
 
 $(document).ready(function() {
+	// $.ajaxSetup({
+	// 	timout: 0
+	// });
+
 	getFirewalls();
 
 	$('#get-api-key').click(() => {
@@ -46,8 +51,10 @@ $(document).ready(function() {
 		if (event.target == $('#results-overlay')[0]) {
 			$('body').toggleClass('noscroll');
 			$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
-			$('#results').removeAttr('style');
 			$('#results-filter input').val('');
+			$('#results-filter input').attr('placeholder', 'Filter');
+			$('#results').removeAttr('style');
+			$('#results').removeAttr('data-text-type');
 		}
 	});
 
@@ -69,26 +76,68 @@ $(document).ready(function() {
 		}
 	});
 
-	$('#results-filter input').on('keyup change clear', function() {
-		// Retrieve the input field text and reset the count to zero
-		var filter = $(this).val(),
-			count = 0;
+	$('#results-filter input').on('keyup change', function() {
+		// Pause for a few more characters
+		setTimeout(() => {
+			// Retrieve the input field text
+			var filter = $(this).val();
 
-		$('#results-body div').contents().each(function() {
-			// If the list item does not contain the text hide it
-			if ($(this).text().search(new RegExp(filter, 'i')) < 0) {
-				$(this).parent().hide();
+			if ($('#results').attr('data-text-type') == 'xml') {
+				// Remove tag start and end characters
+				filter = filter.replace(/(<|>|\/)/g, '');
+				var startTag = new RegExp(`<${filter}[^/]*?>`, 'i');
+				var endTag;
+				var showTagChildren = false;
+
+				$('#results-body div').contents().each(function() {
+					if (filter == '') {
+						$(this).parent().show();
+					} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
+						// No closing tag match and showTagChildren is true
+						$(this).parent().show();
+					} else if ($(this).text().search(endTag) > 0 && showTagChildren) {
+						// Closing tag matches and showTagChildren is true
+						showTagChildren = false;
+						$(this).parent().show();
+					} else if (
+						$(this).text().search(startTag) > 0 &&
+						$(this)
+							.text()
+							.search(
+								new RegExp(`${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`)
+							) < 0
+					) {
+						// Filter matches and closing tag not on the same line
+						showTagChildren = true;
+						endTag = `${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`;
+						$(this).parent().show();
+					} else if ($(this).text().search(startTag) > 0) {
+						$(this).parent().show();
+					} else {
+						$(this).parent().hide();
+					}
+				});
 			} else {
-				// Show the list item if the phrase matches and increase the count by 1
-				$(this).parent().show();
-				count++;
+				var re = new RegExp(filter, 'i');
+				$('#results-body div').contents().each(function() {
+					// If the list item does not contain the text hide it
+					if ($(this).text().search(re) < 0) {
+						$(this).parent().hide();
+					} else {
+						// Show the list item if the phrase matches
+						$(this).parent().show();
+					}
+				});
 			}
-		});
+		}, 500);
 	});
 
-	$('#results-filter button').on('click', function() {
+	$('#results-filter button').on('click clear', function() {
 		$('#results-filter input').val('');
-		$('#results-filter input').change();
+		$('#results-body div').contents().each(function() {
+			$(this).parent().show();
+		});
+		$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 	});
 });
 
@@ -125,7 +174,7 @@ function getInterfaces() {
 		return;
 	}
 
-	$('#loading-message').attr('style', 'display: block;');
+	$('#loading-progressbar').attr('style', 'display: block;');
 
 	$.ajax({
 		url: '/get/interfaces',
@@ -133,6 +182,8 @@ function getInterfaces() {
 		data: `key=${apiKey}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
 		success: function(response) {
+			$('#results-filter input').attr('placeholder', 'Filter');
+
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
 			response.split('\n').forEach(function(val) {
@@ -152,13 +203,14 @@ function getInterfaces() {
 			$('#results').html(modifiedResponse.join(''));
 
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
+			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
+			$('#results-overlay .modal-content').scrollTop(0);
+			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
-			$('#loading-message').attr('style', 'display: none;');
 		},
 		error: function(xhr, status, error) {
-			$(body).toggleClass('noscroll');
-			$('#loading-message').attr('style', 'display: none;');
+			$('#loading-progressbar').attr('style', 'display: none;');
 			window.alert('Something went seriously wrong');
 		}
 	});
@@ -166,7 +218,8 @@ function getInterfaces() {
 
 function runCommand() {
 	var username = $('#username').val();
-	var password = $('#password').val();
+	// Encode to handle symbols that break AJAX requests
+	var password = encodeURIComponent($('#password').val());
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
 
@@ -191,7 +244,7 @@ function runCommand() {
 		return;
 	}
 
-	$('#loading-message').attr('style', 'display: block;');
+	$('#loading-progressbar').attr('style', 'display: block;');
 
 	$.ajax({
 		url: '/run/command',
@@ -199,6 +252,8 @@ function runCommand() {
 		data: `username=${username}&password=${password}&command=${command}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
 		success: function(response) {
+			$('#results-filter input').attr('placeholder', 'Filter');
+
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
 			response.split('\n').forEach(function(val) {
@@ -217,12 +272,14 @@ function runCommand() {
 
 			$('#results').html(modifiedResponse.join(''));
 
-			$('body').toggleClass('noscroll');
+			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
-			$('#loading-message').attr('style', 'display: none;');
+			$('#results-overlay .modal-content').scrollTop(0);
+			$('#loading-progressbar').attr('style', 'display: none;');
+			$('body').toggleClass('noscroll');
 		},
 		error: function(xhr, status, error) {
-			$('#loading-message').attr('style', 'display: none;');
+			$('#loading-progressbar').attr('style', 'display: none;');
 			window.alert(`Something went seriously wrong (${error}).`);
 		}
 	});
@@ -230,7 +287,8 @@ function runCommand() {
 
 function getConfig(format) {
 	var username = $('#username').val();
-	var password = $('#password').val();
+	// Encode to handle symbols that break AJAX requests
+	var password = encodeURIComponent($('#password').val());
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
 
@@ -250,7 +308,7 @@ function getConfig(format) {
 		return;
 	}
 
-	$('#loading-message').attr('style', 'display: block;');
+	$('#loading-progressbar').attr('style', 'display: block;');
 
 	$.ajax({
 		url: '/get/config',
@@ -260,6 +318,14 @@ function getConfig(format) {
 		)}`,
 		dataType: 'text',
 		success: function(response) {
+			if (format == 'xml') {
+				// Change input placeholder to 'Tag Filter'
+				$('#results-filter input').attr('placeholder', 'Tag Filter');
+				$('#results').attr('data-text-type', 'xml');
+			} else {
+				$('#results-filter input').attr('placeholder', 'Filter');
+			}
+
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
 			response.split('\n').forEach(function(val) {
@@ -268,12 +334,13 @@ function getConfig(format) {
 				} else if (val.indexOf('=') == 0) {
 					modifiedResponse.push(`${val}<br>`);
 				} else {
-					val = val.replace(/&/g, '&amp;');
-					// val = val.replace('///g', '&#47;');
-					val = val.replace(/b'</, '&lt;');
-					val = val.replace(/>'/, '&gt;');
-					val = val.replace(/>/g, '&gt;');
-					val = val.replace(/</g, '&lt;');
+					if (format == 'xml') {
+						val = val.replace(/&/g, '&amp;');
+						val = val.replace(/b'</, '&lt;');
+						val = val.replace(/>'/, '&gt;');
+						val = val.replace(/>/g, '&gt;');
+						val = val.replace(/</g, '&lt;');
+					}
 					modifiedResponse.push(`<div>${String(val)}</div>`);
 				}
 			});
@@ -285,13 +352,14 @@ function getConfig(format) {
 			$('#results').html(modifiedResponse.join(''));
 
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
+			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
+			$('#results-overlay .modal-content').scrollTop(0);
+			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
-			$('#loading-message').attr('style', 'display: none;');
 		},
 		error: function(xhr, status, error) {
-			$(body).toggleClass('noscroll');
-			$('#loading-message').attr('style', 'display: none;');
+			$('#loading-progressbar').attr('style', 'display: none;');
 			window.alert('Something went seriously wrong');
 		}
 	});
@@ -302,6 +370,7 @@ function clearSearch() {
 		this.value = '';
 		this.dispatchEvent(new Event('clear'));
 	});
+	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 }
 
 function getApiKey() {
@@ -337,228 +406,332 @@ function getApiKey() {
 }
 
 function getFirewalls() {
+	// Get Panorama device tags
 	$.ajax({
-		url: '/',
+		url: `/get/tags`,
 		type: 'POST',
 		dataType: 'xml',
 		success: function(response) {
-			$('#events').html('&nbsp');
-
-			const tableBody = $('#firewalls').find('tbody');
-			tableData = [];
+			var firewallTags = {};
 
 			$(response).find('devices').children('entry').each(function() {
-				var hostname = $(this).children('hostname').text();
-				var serial = $(this).children('serial').text();
-				var ipAddress = $(this).children('ip-address').text();
-				var model = $(this).children('model').text();
-				// Convert to title case
-				var connected = $(this).children('connected').text().replace(/(?:^|\s)\w/, (match) => {
-					return match.toUpperCase();
+				var tags = new Set();
+				var serial = $(this).attr('name');
+				$(this).find('tags').find('member').each(function() {
+					tags.add($(this).text());
 				});
-				var uptime = $(this).children('uptime').text();
-				var swVersion = $(this).children('sw-version').text();
-				var haState = $(this).children('ha').children('state').text();
-				haState = `${haState.charAt(0).toUpperCase()}${haState.slice(1)}`;
 
-				var vSystems = [];
-				$(this).children('vsys').children('entry').each(function() {
-					var name = $(this).children('display-name').text().toLowerCase();
-					if (name) {
-						vSystems.push(name);
-					}
-				});
-				vSystems = vSystems.sort().join(', <br>');
-
-				if (hostname) {
-					hostname = `${hostname.toLowerCase()}.${env.domain}`;
-
-					tableData.push({
-						hostname: `<a target="_blank" href="https://${hostname}">${hostname}</a>`,
-						ipAddress: ipAddress,
-						serialNumber: serial,
-						modelNumber: model,
-						connected: connected,
-						uptime: uptime,
-						swVersion: swVersion,
-						haState: haState,
-						vSystems: vSystems
-					});
+				if (serial in firewallTags) {
+					originalTags = firewallTags[serial];
+					firewallTags[serial] = new Set([ ...originalTags, ...tags ]);
+				} else {
+					firewallTags[serial] = tags;
 				}
 			});
 
-			if (!tableInitialized) {
-				tableInitialized = true;
+			// Get Panorama managed firewalls
+			$.ajax({
+				url: '/',
+				type: 'POST',
+				dataType: 'xml',
+				success: function(response) {
+					$('#events').html('&nbsp');
 
-				// Add column search
-				$('#firewalls thead th').each(function() {
-					var title = $(this).text();
-					$(this).html(
-						`<label>${title}</label><br><input class="searchInput" type="search" placeholder="" />`
+					const tableBody = $('#firewalls').find('tbody');
+
+					// Find all active HA peers for row grouping
+					var haPairs = new Proxy(
+						{},
+						{
+							get: function(object, property) {
+								return object.hasOwnProperty(property) ? object[property] : '';
+							}
+						}
 					);
-				});
-
-				// Delay showing the thead prematurely
-				$('#firewalls thead').show();
-
-				table = $('#firewalls').DataTable({
-					data: tableData,
-					autoWidth: false,
-					columns: [
-						{ data: 'hostname' },
-						{ data: 'ipAddress' },
-						{ data: 'serialNumber' },
-						{ data: 'modelNumber' },
-						{ data: 'connected' },
-						{ data: 'uptime' },
-						{ data: 'swVersion' },
-						{ data: 'haState' },
-						{ data: 'vSystems' }
-					],
-					fixedHeader: true,
-					buttons: true,
-					order: [ [ 0, 'asc' ] ],
-					paging: false,
-					searching: true,
-					rowId: 'serialNumber',
-					select: true,
-					dom:
-						'<"fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"<"toolbar">Blr>' +
-						't' +
-						'<"fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
-					createdRow: (row, data, dataIndex, cells) => {
-						if (data['connected'] == `No`) {
-							$(cells[4]).addClass('notConnected');
+					$(response).find('devices').children('entry').each(function() {
+						if ($(this).find('state').text() == 'active') {
+							serial = $(this).children('serial').text();
+							hostname = $(this).children('hostname').text();
+							haPairs[serial] = `${hostname} (Active) | `;
 						}
-					},
-					buttons: [
-						{
-							text: 'Clear Search',
-							attr: {
-								id: 'clear-search'
-							},
-							action: function() {
-								$('#clear-search').toggleClass('hide');
-								clearSearch();
+					});
+
+					// Find all passive HA peers for row grouping
+					$(response).find('devices').children('entry').each(function() {
+						serial = $(this).children('serial').text();
+						hostname = $(this).children('hostname').text();
+
+						if ($(this).find('state').text() == 'passive') {
+							peerSerial = $(this).children('ha').find('serial').text();
+							haPairs[peerSerial] += `${hostname} (Passive)`;
+							haPairs[serial] = haPairs[peerSerial];
+						} else if ($(this).children('ha').length == 0) {
+							haPairs[serial] = hostname;
+						}
+					});
+
+					tableData = [];
+					$(response).find('devices').children('entry').each(function() {
+						var hostname = $(this).children('hostname').text();
+						var ipAddress = $(this).children('ip-address').text();
+						var model = $(this).children('model').text();
+						var serial = $(this).children('serial').text();
+						var haPair = haPairs[serial];
+						// Convert to title case
+						var connected = $(this).children('connected').text().replace(/(?:^|\s)\w/, (match) => {
+							return match.toUpperCase();
+						});
+						var uptime = $(this).children('uptime').text();
+						var swVersion = $(this).children('sw-version').text();
+						var tags = Array.from(firewallTags[serial]).sort().join(', <br>');
+						var haState = $(this).children('ha').children('state').text();
+						haState = `${haState.charAt(0).toUpperCase()}${haState.slice(1)}`;
+
+						var vSystems = [];
+						$(this).children('vsys').children('entry').each(function() {
+							var name = $(this).children('display-name').text().toLowerCase();
+							if (name) {
+								vSystems.push(name);
 							}
-						},
-						{
-							text: 'Deselect All',
-							attr: {
-								id: 'deselect-all-rows'
+						});
+						vSystems = vSystems.sort().join(', <br>');
+
+						if (hostname) {
+							hostname = `${hostname.toLowerCase()}.${env.domain}`;
+
+							tableData.push({
+								hostname: `<a target="_blank" href="https://${hostname}">${hostname}</a>`,
+								ipAddress: ipAddress,
+								serialNumber: serial,
+								modelNumber: model,
+								connected: connected,
+								uptime: uptime,
+								swVersion: swVersion,
+								haState: haState,
+								tags: tags,
+								vSystems: vSystems,
+								haPair: haPair
+							});
+						}
+					});
+
+					if (!tableInitialized) {
+						tableInitialized = true;
+
+						// Add column search
+						$('#firewalls thead th').each(function() {
+							var title = $(this).text();
+							$(this).html(
+								`<label>${title}</label><br><input class="searchInput" type="search" placeholder="" />`
+							);
+						});
+
+						// Delay showing the thead prematurely
+						$('#firewalls thead').show();
+
+						table = $('#firewalls').DataTable({
+							data: tableData,
+							autoWidth: false,
+							columns: [
+								{ data: 'hostname' },
+								{ data: 'ipAddress' },
+								{ data: 'serialNumber' },
+								{ data: 'modelNumber' },
+								{ data: 'connected' },
+								{ data: 'uptime' },
+								{ data: 'swVersion' },
+								{ data: 'haState' },
+								{ data: 'tags' },
+								{ data: 'vSystems' },
+								{ data: 'haPair' }
+							],
+							columnDefs: [ { targets: [ 2, 6, 7, 10 ], visible: false } ],
+							rowGroup: false,
+							// rowGroup: {
+							// 	dataSrc: 'haPair',
+							// 	// emptyDataGroup: '',
+							// 	// className: 'table-group',
+							// 	endClassName: 'end-table-group',
+							// 	startRender: function(rows, group) {
+							// 		if (group.match(/Active/g)) {
+							// 			return group;
+							// 		} else {
+							// 			return '';
+							// 		}
+							// 	},
+							// 	endRender: function(rows, group) {
+							// 		if (group.match(/Active/g)) {
+							// 			return ' ';
+							// 		}
+							// 	}
+							// },
+							// orderFixed: [ 10, 'asc' ],
+							fixedHeader: true,
+							buttons: true,
+							order: [ [ 0, 'asc' ] ],
+							paging: false,
+							searching: true,
+							rowId: 'serialNumber',
+							select: true,
+							dom:
+								'<"fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"<"toolbar">Blr>' +
+								't' +
+								'<"fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
+							createdRow: (row, data, dataIndex, cells) => {
+								if (data['connected'] == `No`) {
+									$(cells[4]).addClass('notConnected');
+								}
 							},
-							action: function() {
-								table.rows().deselect();
+							buttons: [
+								{
+									text: 'Clear Search',
+									attr: {
+										id: 'clear-search'
+									},
+									action: function() {
+										$('#clear-search').toggleClass('hide');
+										clearSearch();
+									}
+								},
+								{
+									text: 'Deselect All',
+									attr: {
+										id: 'deselect-all-rows'
+									},
+									action: function() {
+										table.rows().deselect();
+										$('#deselect-all-rows').addClass('hide');
+										$('#select-all-rows').removeClass('hide');
+									}
+								},
+								{
+									text: 'Select All',
+									attr: {
+										id: 'select-all-rows'
+									},
+									action: function() {
+										table.rows().select();
+										$('#select-all-rows').addClass('hide');
+										$('#deselect-all-rows').removeClass('hide');
+									}
+								},
+								{
+									extend: 'pdfHtml5',
+									exportOptions: {
+										columns: ':visible'
+									}
+								},
+								{
+									extend: 'excelHtml5',
+									exportOptions: {
+										columns: ':visible'
+									}
+								},
+								{
+									extend: 'copyHtml5',
+									exportOptions: {
+										columns: [ 0, ':visible' ]
+									}
+								},
+								{
+									extend: 'colvis',
+									text: 'Columns'
+								}
+							],
+							drawCallback: function(settings) {
+								// TODO: Add class to style empty headers
+								// This is not working
+								// clearSearch()
+								$('tbody tr.dtrg-start>td:Contains("No group")').remove();
+							}
+						});
+
+						// Default button hidden
+						$('#clear-search').toggleClass('hide');
+						$('#deselect-all-rows').toggleClass('hide');
+
+						// Apply the search
+						table.columns().every(function() {
+							var that = this;
+
+							$('input', this.header()).click(function() {
+								event.stopPropagation();
+							});
+
+							$('input', this.header()).on('keyup change clear', function() {
+								// Pause for a few more characters
+								setTimeout(() => {
+									if (this.value) {
+										$('#clear-search').removeClass('hide');
+									} else {
+										$('#clear-search').addClass('hide');
+									}
+
+									if (that.search() !== this.value) {
+										that.search(this.value, 'regex').draw();
+									}
+									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
+								}, 500);
+							});
+						});
+
+						table.on('deselect', function(e, dt, type, indexes) {
+							if (table.rows({ selected: true }).count() == 0) {
 								$('#deselect-all-rows').addClass('hide');
-								$('#select-all-rows').removeClass('hide');
 							}
-						},
-						{
-							text: 'Select All',
-							attr: {
-								id: 'select-all-rows'
-							},
-							action: function() {
-								table.rows().select();
-								$('#select-all-rows').addClass('hide');
-								$('#deselect-all-rows').removeClass('hide');
-							}
-						},
-						{
-							extend: 'pdfHtml5',
-							exportOptions: {
-								columns: ':visible'
-							}
-						},
-						{
-							extend: 'excelHtml5',
-							exportOptions: {
-								columns: ':visible'
-							}
-						},
-						{
-							extend: 'copyHtml5',
-							exportOptions: {
-								columns: [ 0, ':visible' ]
-							}
-						},
-						{
-							extend: 'colvis',
-							text: 'Columns'
-						}
-					]
-				});
+						});
 
-				// Default button hidden
-				$('#clear-search').toggleClass('hide');
-				$('#deselect-all-rows').toggleClass('hide');
+						table.on('select', function(e, dt, type, indexes) {
+							$('#deselect-all-rows').removeClass('hide');
+						});
 
-				// Apply the search
-				table.columns().every(function() {
-					var that = this;
+						$('div.toolbar').html(`
+							<div class="menu-wrap">
+								<input type="checkbox" class="toggler">
+								<div class="hamburger"><div></div></div>
+								<div class="menu">
+								<div>
+									<div>
+									<ul>
+									<li><a onclick="getInterfaces()">Get Interfaces</a></li>
+									<li><a onclick="runCommand()">Run Command</a></li>
+									<li><a onclick="getConfig('xml')">Get Configuration (XML)</a></li>
+									<li><a onclick="getConfig('set')">Get Configuration (Set)</a></li>
+									</ul>
+									</div>
+								</div>
+								</div>
+							</div>
+							<div class="toolbar-title"><a href="https://${env.panorama}/" target="_blank">Panorama</a> Managed Firewalls</div>
+						`);
+					}
 
-					$('input', this.header()).click(function() {
+					// Save current rows selection
+					var selectedRows = [];
+					$('.selected').each(function() {
+						var id = `#${table.row(this).id()}`;
+						selectedRows.push(id);
+					});
+
+					table.clear().rows.add(tableData).draw();
+
+					// TODO: Add class to style empty headers
+					// Ties with drawCallback option
+					// clearSearch()
+					// table.columns().every(function() {
+					// try calling table.draw()
+					$('tbody tr.dtrg-start>td:Contains("No group")').remove();
+
+					// Restore rows selection
+					table.rows(selectedRows).select();
+
+					$('td>a').click(function() {
 						event.stopPropagation();
 					});
-
-					$('input', this.header()).on('keyup change clear', function() {
-						if (this.value) {
-							$('#clear-search').removeClass('hide');
-						} else {
-							$('#clear-search').addClass('hide');
-						}
-
-						if (that.search() !== this.value) {
-							that.search(this.value, 'regex').draw();
-						}
-					});
-				});
-
-				table.on('deselect', function(e, dt, type, indexes) {
-					if (table.rows({ selected: true }).count() == 0) {
-						$('#deselect-all-rows').addClass('hide');
-					}
-				});
-
-				table.on('select', function(e, dt, type, indexes) {
-					$('#deselect-all-rows').removeClass('hide');
-				});
-
-				$('div.toolbar').html(`
-					<div class="menu-wrap">
-						<input type="checkbox" class="toggler">
-						<div class="hamburger"><div></div></div>
-						<div class="menu">
-						<div>
-							<div>
-							<ul>
-							<li><a onclick="getInterfaces()">Get Interfaces</a></li>
-							<li><a onclick="runCommand()">Run Command</a></li>
-							<li><a onclick="getConfig('xml')">Get XML Config</a></li>
-							<li><a onclick="getConfig('set')">Get Set Config</a></li>
-							</ul>
-							</div>
-						</div>
-						</div>
-					</div>
-					<div class="toolbar-title"><a href="https://${env.panorama}/" target="_blank">Panorama</a> Managed Firewalls</div>
-				`);
-			}
-
-			// Save current rows selection
-			var selectedRows = [];
-			$('.selected').each(function() {
-				var id = `#${table.row(this).id()}`;
-				selectedRows.push(id);
-			});
-
-			table.clear().rows.add(tableData).draw();
-
-			// Restore rows selection
-			table.rows(selectedRows).select();
-
-			$('td>a').click(function() {
-				event.stopPropagation();
+				},
+				error: function(xhr, status, error) {
+					$('#events').text('Connection to Panorama failed!');
+				}
 			});
 		},
 		error: function(xhr, status, error) {
