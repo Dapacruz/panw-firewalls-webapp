@@ -26,6 +26,7 @@ func (c *RunCommand) Post() {
 		fmt.Println(err)
 	}
 
+	fmt.Printf("Password: %v\n", request.Password)
 	cmd := exec.Command("static/py/run-panw-cmd.py","--user", request.Username, "--password", request.Password, "--command", request.Command, request.Firewalls)
 	var outb, errb bytes.Buffer
 	cmd.Stdout = &outb
@@ -35,7 +36,7 @@ func (c *RunCommand) Post() {
 		log.Fatal(err)
 	}
 
-	// fmt.Println("out:", outb.String(), "err:", errb.String())
+	fmt.Println("out:", outb.String(), "err:", errb.String())
 	
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }

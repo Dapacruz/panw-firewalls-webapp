@@ -61,6 +61,7 @@ td.notConnected {
 
 .searchInput {
 	margin-top: 5px;
+	height: 17px;
 	border: 0;
 	width: 65%;
 }
@@ -149,7 +150,6 @@ td.notConnected {
 	top: 0;
 	width: 100%;
 	height: 100%;
-	overflow-y: scroll;
 	overflow-wrap: normal;
 	background-color: rgb(0, 0, 0);
 	background-color: rgba(0, 0, 0, 0.4);
@@ -184,19 +184,19 @@ td.notConnected {
 	height: 40px;
 }
 
-#results-filter input {
-	height: 28.2333px;
-}
-
 #results-filter-input,
 #results-filter-button {
+	display: inline-block;
+	vertical-align: middle;
 	float: left;
 	margin-top: 5px;
 	margin-right: 5px;
 }
 
 #results-filter-input {
+	-webkit-appearance: none;
 	padding-left: 5px;
+	height: 28.233330px;
 }
 
 .modal-content pre {
@@ -206,6 +206,7 @@ td.notConnected {
 	margin-left: 100px;
 	padding-right: 50px;
 	white-space: pre-wrap;
+	overflow-y: scroll;
 }
 
 /* The Close Button */

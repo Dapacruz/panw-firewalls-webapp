@@ -6,6 +6,11 @@ var table;
 var tableData = [];
 var tableInitialized = false;
 var apiKey;
+var now = new Date();
+var msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 24, 0, 0, 0) - now;
+if (msToMidnight < 0) {
+	msToMidnight += 86400000;
+}
 var env = (function() {
 	var json = null;
 	$.ajax({
@@ -272,6 +277,7 @@ function runCommand() {
 
 			$('#results').html(modifiedResponse.join(''));
 
+			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
 			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
 			$('#results-overlay .modal-content').scrollTop(0);
@@ -405,6 +411,18 @@ function getApiKey() {
 	});
 }
 
+function logout() {
+	if (apiKey) {
+		apiKey = null;
+		$('#password').val('');
+		$('#get-api-key').html('Log In').attr('disabled', false);
+		$('#auth-event').text('Logged out');
+		setTimeout(() => {
+			$('#auth-event').html('&nbsp');
+		}, 30000);
+	}
+}
+
 function getFirewalls() {
 	// Get Panorama device tags
 	$.ajax({
@@ -418,7 +436,8 @@ function getFirewalls() {
 				var tags = new Set();
 				var serial = $(this).attr('name');
 				$(this).find('tags').find('member').each(function() {
-					tags.add($(this).text());
+					var tag = $(this).text();
+					tags.add(tag ? tag : '');
 				});
 
 				if (serial in firewallTags) {
@@ -744,3 +763,8 @@ function getFirewalls() {
 setInterval(() => {
 	getFirewalls();
 }, 30000);
+
+// Logout at midnight due to password changes
+setTimeout(function() {
+	logout();
+}, msToMidnight);
