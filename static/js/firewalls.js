@@ -6,40 +6,36 @@ var table;
 var tableData = [];
 var tableInitialized = false;
 var apiKey;
-var now = new Date();
-var msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 24, 0, 0, 0) - now;
-if (msToMidnight < 0) {
-	msToMidnight += 86400000;
-}
-var env = (function() {
+var loginTimeout;
+var env = (function () {
 	var json = null;
 	$.ajax({
 		async: false,
 		global: false,
 		url: 'static/js/env.json',
 		dataType: 'json',
-		success: function(data) {
+		success: function (data) {
 			json = data;
 		}
 	});
 	return json;
 })();
 
-$(document).ready(function() {
+$(document).ready(function () {
 	// $.ajaxSetup({
 	// 	timout: 0
 	// });
 
 	getFirewalls();
 
-	$('#get-api-key').click(() => {
-		getApiKey();
+	$('#login').click(() => {
+		login();
 	});
 
-	$('#username, #password').on('keyup', function(event) {
+	$('#username, #password').on('keyup', function (event) {
 		if (event.keyCode == 13) {
 			event.preventDefault();
-			$('#get-api-key').click();
+			$('#login').click();
 		}
 	});
 
@@ -64,7 +60,7 @@ $(document).ready(function() {
 	});
 
 	// Limit ctrl/cmd+a selection to results overlay
-	$('.modal-content').keydown(function(e) {
+	$('.modal-content').keydown(function (e) {
 		if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
 			e.preventDefault();
 			selectText('results');
@@ -72,7 +68,7 @@ $(document).ready(function() {
 	});
 
 	// Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
-	$(document).keydown(function(e) {
+	$(document).keydown(function (e) {
 		if ($('.modal-content:hover').length != 0) {
 			if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
 				e.preventDefault();
@@ -81,7 +77,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$('#results-filter input').on('keyup change', function() {
+	$('#results-filter input').on('keyup change', function () {
 		// Pause for a few more characters
 		setTimeout(() => {
 			// Retrieve the input field text
@@ -94,7 +90,7 @@ $(document).ready(function() {
 				var endTag;
 				var showTagChildren = false;
 
-				$('#results-body div').contents().each(function() {
+				$('#results-body div').contents().each(function () {
 					if (filter == '') {
 						$(this).parent().show();
 					} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
@@ -124,7 +120,7 @@ $(document).ready(function() {
 				});
 			} else {
 				var re = new RegExp(filter, 'i');
-				$('#results-body div').contents().each(function() {
+				$('#results-body div').contents().each(function () {
 					// If the list item does not contain the text hide it
 					if ($(this).text().search(re) < 0) {
 						$(this).parent().hide();
@@ -137,9 +133,9 @@ $(document).ready(function() {
 		}, 500);
 	});
 
-	$('#results-filter button').on('click clear', function() {
+	$('#results-filter button').on('click clear', function () {
 		$('#results-filter input').val('');
-		$('#results-body div').contents().each(function() {
+		$('#results-body div').contents().each(function () {
 			$(this).parent().show();
 		});
 		$('tbody tr.dtrg-start>td:Contains("No group")').remove();
@@ -186,12 +182,12 @@ function getInterfaces() {
 		type: 'POST',
 		data: `key=${apiKey}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
-		success: function(response) {
+		success: function (response) {
 			$('#results-filter input').attr('placeholder', 'Filter');
 
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
-			response.split('\n').forEach(function(val) {
+			response.split('\n').forEach(function (val) {
 				if (val == '') {
 					modifiedResponse.push(`<br>`);
 				} else {
@@ -214,7 +210,7 @@ function getInterfaces() {
 			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
 		},
-		error: function(xhr, status, error) {
+		error: function (xhr, status, error) {
 			$('#loading-progressbar').attr('style', 'display: none;');
 			window.alert('Something went seriously wrong');
 		}
@@ -256,12 +252,12 @@ function runCommand() {
 		type: 'POST',
 		data: `username=${username}&password=${password}&command=${command}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
-		success: function(response) {
+		success: function (response) {
 			$('#results-filter input').attr('placeholder', 'Filter');
 
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
-			response.split('\n').forEach(function(val) {
+			response.split('\n').forEach(function (val) {
 				if (val == '') {
 					modifiedResponse.push(`<br>`);
 				} else if (val.indexOf('=') == 0) {
@@ -284,7 +280,7 @@ function runCommand() {
 			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
 		},
-		error: function(xhr, status, error) {
+		error: function (xhr, status, error) {
 			$('#loading-progressbar').attr('style', 'display: none;');
 			window.alert(`Something went seriously wrong (${error}).`);
 		}
@@ -323,7 +319,7 @@ function getConfig(format) {
 			' '
 		)}`,
 		dataType: 'text',
-		success: function(response) {
+		success: function (response) {
 			if (format == 'xml') {
 				// Change input placeholder to 'Tag Filter'
 				$('#results-filter input').attr('placeholder', 'Tag Filter');
@@ -334,7 +330,7 @@ function getConfig(format) {
 
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
-			response.split('\n').forEach(function(val) {
+			response.split('\n').forEach(function (val) {
 				if (val == '') {
 					modifiedResponse.push(`<br>`);
 				} else if (val.indexOf('=') == 0) {
@@ -364,7 +360,7 @@ function getConfig(format) {
 			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
 		},
-		error: function(xhr, status, error) {
+		error: function (xhr, status, error) {
 			$('#loading-progressbar').attr('style', 'display: none;');
 			window.alert('Something went seriously wrong');
 		}
@@ -372,14 +368,14 @@ function getConfig(format) {
 }
 
 function clearSearch() {
-	$('.searchInput').each(function() {
+	$('.searchInput').each(function () {
 		this.value = '';
 		this.dispatchEvent(new Event('clear'));
 	});
 	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 }
 
-function getApiKey() {
+function login() {
 	var username = $('#username').val();
 	// Encode to handle symbols that break AJAX requests
 	var password = encodeURIComponent($('#password').val());
@@ -391,17 +387,26 @@ function getApiKey() {
 		crossDomain: true,
 		data: `type=keygen&user=${username}&password=${password}`,
 		dataType: 'xml',
-		success: function(response) {
+		success: function (response) {
 			apiKey = $(response).find('key').text();
 			if (apiKey) {
-				$('#get-api-key').html('Logged In').attr('disabled', true);
+				$('#login').html('Logout').unbind('click').click(() => {
+					logout();
+				});
+				$('#username').hide();
+				$('#password').hide();
 				$('#auth-event').text('Authenticated!');
 				setTimeout(() => {
 					$('#auth-event').html('&nbsp');
 				}, 5000);
 			}
+
+			// Logout at midnight due to password changes
+			loginTimeout = setTimeout(function () {
+				logout();
+			}, getMSToMidnight());
 		},
-		error: function(xhr, status, error) {
+		error: function (xhr, status, error) {
 			console.log(error);
 			$('#auth-event').html('Authentication failed!');
 			setTimeout(() => {
@@ -414,35 +419,46 @@ function getApiKey() {
 function logout() {
 	if (apiKey) {
 		apiKey = null;
+		clearTimeout(loginTimeout);
 		$('#password').val('');
-		$('#get-api-key').html('Log In').attr('disabled', false);
-		$('#auth-event').text('Logged out');
-		setTimeout(() => {
-			$('#auth-event').html('&nbsp');
-		}, 30000);
+		$('#login').html('Login').unbind('click').click(() => {
+			login();
+		});
+		$('#username').show();
+		$('#password').show();
+		$('#auth-event').text(`Logged out at ${new Date().toLocaleTimeString()}`);
 	}
+}
+
+function getMSToMidnight() {
+	now = new Date();
+	msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 24, 0, 0, 0) - now;
+	if (msToMidnight < 0) {
+		msToMidnight += 86400000;
+	}
+	return msToMidnight;
 }
 
 function getFirewalls() {
 	// Get Panorama device tags
 	$.ajax({
-		url: `/get/tags`,
+		url: '/get/tags',
 		type: 'POST',
 		dataType: 'xml',
-		success: function(response) {
+		success: function (response) {
 			var firewallTags = {};
 
-			$(response).find('devices').children('entry').each(function() {
+			$(response).find('devices').children('entry').each(function () {
 				var tags = new Set();
 				var serial = $(this).attr('name');
-				$(this).find('tags').find('member').each(function() {
+				$(this).find('tags').find('member').each(function () {
 					var tag = $(this).text();
 					tags.add(tag ? tag : '');
 				});
 
 				if (serial in firewallTags) {
 					originalTags = firewallTags[serial];
-					firewallTags[serial] = new Set([ ...originalTags, ...tags ]);
+					firewallTags[serial] = new Set([...originalTags, ...tags]);
 				} else {
 					firewallTags[serial] = tags;
 				}
@@ -453,7 +469,7 @@ function getFirewalls() {
 				url: '/',
 				type: 'POST',
 				dataType: 'xml',
-				success: function(response) {
+				success: function (response) {
 					$('#events').html('&nbsp');
 
 					const tableBody = $('#firewalls').find('tbody');
@@ -462,12 +478,12 @@ function getFirewalls() {
 					var haPairs = new Proxy(
 						{},
 						{
-							get: function(object, property) {
+							get: function (object, property) {
 								return object.hasOwnProperty(property) ? object[property] : '';
 							}
 						}
 					);
-					$(response).find('devices').children('entry').each(function() {
+					$(response).find('devices').children('entry').each(function () {
 						if ($(this).find('state').text() == 'active') {
 							serial = $(this).children('serial').text();
 							hostname = $(this).children('hostname').text();
@@ -476,7 +492,7 @@ function getFirewalls() {
 					});
 
 					// Find all passive HA peers for row grouping
-					$(response).find('devices').children('entry').each(function() {
+					$(response).find('devices').children('entry').each(function () {
 						serial = $(this).children('serial').text();
 						hostname = $(this).children('hostname').text();
 
@@ -490,7 +506,7 @@ function getFirewalls() {
 					});
 
 					tableData = [];
-					$(response).find('devices').children('entry').each(function() {
+					$(response).find('devices').children('entry').each(function () {
 						var hostname = $(this).children('hostname').text();
 						var ipAddress = $(this).children('ip-address').text();
 						var model = $(this).children('model').text();
@@ -507,7 +523,7 @@ function getFirewalls() {
 						haState = `${haState.charAt(0).toUpperCase()}${haState.slice(1)}`;
 
 						var vSystems = [];
-						$(this).children('vsys').children('entry').each(function() {
+						$(this).children('vsys').children('entry').each(function () {
 							var name = $(this).children('display-name').text().toLowerCase();
 							if (name) {
 								vSystems.push(name);
@@ -538,7 +554,7 @@ function getFirewalls() {
 						tableInitialized = true;
 
 						// Add column search
-						$('#firewalls thead th').each(function() {
+						$('#firewalls thead th').each(function () {
 							var title = $(this).text();
 							$(this).html(
 								`<label>${title}</label><br><input class="searchInput" type="search" placeholder="" />`
@@ -564,7 +580,7 @@ function getFirewalls() {
 								{ data: 'vSystems' },
 								{ data: 'haPair' }
 							],
-							columnDefs: [ { targets: [ 2, 6, 7, 10 ], visible: false } ],
+							columnDefs: [{ targets: [2, 6, 7, 10], visible: false }],
 							rowGroup: false,
 							// rowGroup: {
 							// 	dataSrc: 'haPair',
@@ -587,7 +603,7 @@ function getFirewalls() {
 							// orderFixed: [ 10, 'asc' ],
 							fixedHeader: true,
 							buttons: true,
-							order: [ [ 0, 'asc' ] ],
+							order: [[0, 'asc']],
 							paging: false,
 							searching: true,
 							rowId: 'serialNumber',
@@ -607,7 +623,7 @@ function getFirewalls() {
 									attr: {
 										id: 'clear-search'
 									},
-									action: function() {
+									action: function () {
 										$('#clear-search').toggleClass('hide');
 										clearSearch();
 									}
@@ -617,7 +633,7 @@ function getFirewalls() {
 									attr: {
 										id: 'deselect-all-rows'
 									},
-									action: function() {
+									action: function () {
 										table.rows().deselect();
 										$('#deselect-all-rows').addClass('hide');
 										$('#select-all-rows').removeClass('hide');
@@ -628,7 +644,7 @@ function getFirewalls() {
 									attr: {
 										id: 'select-all-rows'
 									},
-									action: function() {
+									action: function () {
 										table.rows().select();
 										$('#select-all-rows').addClass('hide');
 										$('#deselect-all-rows').removeClass('hide');
@@ -649,7 +665,7 @@ function getFirewalls() {
 								{
 									extend: 'copyHtml5',
 									exportOptions: {
-										columns: [ 0, ':visible' ]
+										columns: [0, ':visible']
 									}
 								},
 								{
@@ -657,7 +673,7 @@ function getFirewalls() {
 									text: 'Columns'
 								}
 							],
-							drawCallback: function(settings) {
+							drawCallback: function (settings) {
 								// TODO: Add class to style empty headers
 								// This is not working
 								// clearSearch()
@@ -670,14 +686,14 @@ function getFirewalls() {
 						$('#deselect-all-rows').toggleClass('hide');
 
 						// Apply the search
-						table.columns().every(function() {
+						table.columns().every(function () {
 							var that = this;
 
-							$('input', this.header()).click(function() {
+							$('input', this.header()).click(function () {
 								event.stopPropagation();
 							});
 
-							$('input', this.header()).on('keyup change clear', function() {
+							$('input', this.header()).on('keyup change clear', function () {
 								// Pause for a few more characters
 								setTimeout(() => {
 									if (this.value) {
@@ -694,13 +710,13 @@ function getFirewalls() {
 							});
 						});
 
-						table.on('deselect', function(e, dt, type, indexes) {
+						table.on('deselect', function (e, dt, type, indexes) {
 							if (table.rows({ selected: true }).count() == 0) {
 								$('#deselect-all-rows').addClass('hide');
 							}
 						});
 
-						table.on('select', function(e, dt, type, indexes) {
+						table.on('select', function (e, dt, type, indexes) {
 							$('#deselect-all-rows').removeClass('hide');
 						});
 
@@ -727,7 +743,7 @@ function getFirewalls() {
 
 					// Save current rows selection
 					var selectedRows = [];
-					$('.selected').each(function() {
+					$('.selected').each(function () {
 						var id = `#${table.row(this).id()}`;
 						selectedRows.push(id);
 					});
@@ -744,27 +760,20 @@ function getFirewalls() {
 					// Restore rows selection
 					table.rows(selectedRows).select();
 
-					$('td>a').click(function() {
+					$('td>a').click(function () {
 						event.stopPropagation();
 					});
 				},
-				error: function(xhr, status, error) {
+				error: function (xhr, status, error) {
 					$('#events').text('Connection to Panorama failed!');
 				}
 			});
 		},
-		error: function(xhr, status, error) {
+		error: function (xhr, status, error) {
 			$('#events').text('Connection to Panorama failed!');
 		}
 	});
 }
 
 // Refresh firewall table data every 30 seconds
-setInterval(() => {
-	getFirewalls();
-}, 30000);
-
-// Logout at midnight due to password changes
-setTimeout(function() {
-	logout();
-}, msToMidnight);
+setInterval(getFirewalls, 30000);

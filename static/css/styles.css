@@ -11,6 +11,10 @@
 	width: 90%;
 }
 
+#firewalls_wrapper {
+	min-width: 1200px;
+}
+
 .logo {
 	margin-bottom: 0;
 	padding: 10px 0 0 10px;
@@ -26,17 +30,6 @@ a:visited {
 }
 a:hover {
 	color: #a7c438;
-}
-
-#firewalls_wrapper {
-	min-width: 1200px;
-}
-
-td {
-	text-align: center;
-}
-td.notConnected {
-	color: red;
 }
 
 .toolbar {
@@ -59,17 +52,6 @@ td.notConnected {
 	color: #a7c438;
 }
 
-.searchInput {
-	margin-top: 5px;
-	height: 17px;
-	border: 0;
-	width: 65%;
-}
-
-.dt-buttons {
-	float: right !important;
-}
-
 #events {
 	color: red;
 	text-align: center;
@@ -79,64 +61,34 @@ td.notConnected {
 	margin-left: 10px;
 }
 
-.noscroll {
-	overflow: hidden;
-}
-
-#header {
-	display: table;
-	margin-bottom: 0;
-	width: 100%;
-}
-
-#logo,
 #form {
-	display: table-cell;
-}
-
-#form {
+	display: grid;
+	grid-gap: .2em;
+	grid-template-columns: 1.2fr 1.2fr .6fr;
+	align-items: center;
 	position: absolute;
 	top: 0;
 	right: 0;
-	margin-top: 10px;
-	margin-right: 10px;
+	margin-top: .5em;
+	margin-right: .5em;
+	min-width: 350px;
 }
-
-#username,
-#password,
-#get-api-key {
-	display: inline-block;
-	vertical-align: middle;
-}
-
 #username,
 #password {
-	height: 28.2333px;
-	padding-left: 5px;
-}
-
-.ui-button,
-.ui-input {
-	font-family: Lato, sans-serif;
+	height: 2.3em;
+	padding-left: .3em;
 	font-size: .8em;
 }
-
+#login {
+	height: 2.3em;
+	grid-column: 3;
+	font-size: .8em;
+}
 #auth-event {
+	grid-column: span 3;
 	text-align: center;
 	padding: 5px;
 	padding-left: 20px;
-}
-
-#firewalls td {
-	vertical-align: top;
-}
-
-#button-bar {
-	float: right;
-	margin-top: 0;
-	margin-left: 20px;
-	margin-right: 20px;
-	margin-bottom: 5px;
 }
 
 /* The Modal (background) */
@@ -154,27 +106,34 @@ td.notConnected {
 	background-color: rgb(0, 0, 0);
 	background-color: rgba(0, 0, 0, 0.4);
 }
-
 /* Modal Content */
 .modal-content {
 	margin: auto;
 	padding: 0;
+	padding-bottom: 1em;
 	border: 1px solid #888;
 	height: 100%;
-	overflow-y: scroll;
-	overflow-wrap: break-word;
 	width: 85%;
+	overflow-y: hidden;
 	background-color: #fefefe;
 }
-
 .modal-content #header {
 	top: 0;
-	margin-bottom: 25px;
 	padding-right: 10px;
 	padding-left: 5px;
 	position: sticky;
 	background-color: #fefefe;
 	border-bottom: 1px solid rgba(170, 170, 170, 0.6);
+}
+.modal-content #results {
+	font-family: "Roboto Mono", monospace;
+	height: 97%;
+	width: 100%;
+	margin: auto;
+	padding: 2em 3em 0 3em;
+	white-space: pre-wrap;
+	overflow-y: scroll;
+	overflow-wrap: break-word;
 }
 
 #results-filter {
@@ -183,30 +142,17 @@ td.notConnected {
 	width: 100%;
 	height: 40px;
 }
-
 #results-filter-input,
 #results-filter-button {
-	display: inline-block;
 	vertical-align: middle;
 	float: left;
 	margin-top: 5px;
 	margin-right: 5px;
 }
-
 #results-filter-input {
 	-webkit-appearance: none;
 	padding-left: 5px;
 	height: 28.233330px;
-}
-
-.modal-content pre {
-	padding-top: 0;
-	padding-bottom: 25px;
-	margin-top: 0;
-	margin-left: 100px;
-	padding-right: 50px;
-	white-space: pre-wrap;
-	overflow-y: scroll;
 }
 
 /* The Close Button */
@@ -216,7 +162,6 @@ td.notConnected {
 	font-size: 28px;
 	font-weight: bold;
 }
-
 .close:hover,
 .close:focus {
 	color: #000;
@@ -234,16 +179,11 @@ td.notConnected {
 	width: 100%;
 	height: 100%;
 }
-
 #loading-progressbar img {
 	display: block;
 	margin: auto;
 	height: 35px;
 	width: 400px;
-}
-
-.hide {
-	display: none;
 }
 
 tr.dtrg-start td {
@@ -253,9 +193,44 @@ tr.dtrg-start td {
 	font-size: .75em;
 	font-weight: normal !important;
 }
-
+td {
+	vertical-align: top;
+	text-align: center;
+}
+td.notConnected {
+	color: red;
+}
 .end-table-group td {
 	padding: 0 !important;
 	background-color: rgb(179, 179, 179) !important;
 	height: 2px;
 }
+
+.hide {
+	display: none;
+}
+
+.noscroll {
+	overflow: hidden;
+}
+
+.searchInput {
+	margin-top: 5px;
+	height: 17px;
+	border: 0;
+	width: 65%;
+}
+
+.dt-buttons {
+	float: right !important;
+}
+
+
+
+/* #button-bar {
+	float: right;
+	margin-top: 0;
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-bottom: 5px;
+} */
