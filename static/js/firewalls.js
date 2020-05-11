@@ -140,6 +140,30 @@ $(document).ready(function () {
 		});
 		$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 	});
+
+	$('.modal-run-cmds__close').on('click', function () {
+		$('.modal-run-cmds__bg').attr('style', 'display: none;');
+		$('.modal-run-cmds__input').val('');
+	});
+
+	$('#modal-run-cmds-button').on('click', function () {
+		let input = $('.modal-run-cmds__input').val().split('\n');
+
+		let commands = [];
+		input.forEach((val) => {
+			cmd = val.trim()
+			if (!cmd) {
+				return;
+			}
+			commands.push("--command");
+			commands.push(cmd);
+		});
+
+		$('.modal-run-cmds__bg').attr('style', 'display: none;');
+		$('.modal-run-cmds__input').val('');
+
+		runCommands(commands);
+	});
 });
 
 function selectText(containerid) {
@@ -206,7 +230,7 @@ function getInterfaces() {
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
 			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
-			$('#results-overlay .modal-content').scrollTop(0);
+			$('#results').scrollTop(0);
 			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
 		},
@@ -217,17 +241,10 @@ function getInterfaces() {
 	});
 }
 
-function runCommand() {
+function runCommands(commands) {
 	var username = $('#username').val();
 	// Encode to handle symbols that break AJAX requests
 	var password = encodeURIComponent($('#password').val());
-	var checkbox = $('.toggler');
-	checkbox.prop('checked', !checkbox.prop('checked'));
-
-	if (!apiKey) {
-		window.alert('You need to log in to execute this action');
-		return;
-	}
 
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
@@ -235,13 +252,7 @@ function runCommand() {
 		hostnames.push(hostname);
 	});
 
-	if (hostnames.length == 0) {
-		window.alert('Please select the rows this action should be applied to');
-		return;
-	}
-
-	var command = prompt('Command to run', 'show system info');
-	if (!command) {
+	if (!commands) {
 		return;
 	}
 
@@ -250,7 +261,7 @@ function runCommand() {
 	$.ajax({
 		url: '/run/command',
 		type: 'POST',
-		data: `username=${username}&password=${password}&command=${command}&firewalls=${hostnames.join(' ')}`,
+		data: `username=${username}&password=${password}&commands=${commands.join(',')}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
 		success: function (response) {
 			$('#results-filter input').attr('placeholder', 'Filter');
@@ -260,6 +271,8 @@ function runCommand() {
 			response.split('\n').forEach(function (val) {
 				if (val == '') {
 					modifiedResponse.push(`<br>`);
+				} else if (val.indexOf('=== ') == 0) {
+					modifiedResponse.push(`<br>${val}<br>`);
 				} else if (val.indexOf('=') == 0) {
 					modifiedResponse.push(`${val}<br>`);
 				} else {
@@ -276,7 +289,7 @@ function runCommand() {
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
 			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
-			$('#results-overlay .modal-content').scrollTop(0);
+			$('#results').scrollTop(0);
 			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
 		},
@@ -356,7 +369,7 @@ function getConfig(format) {
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
 			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
-			$('#results-overlay .modal-content').scrollTop(0);
+			$('#results').scrollTop(0);
 			$('#loading-progressbar').attr('style', 'display: none;');
 			$('body').toggleClass('noscroll');
 		},
@@ -729,7 +742,7 @@ function getFirewalls() {
 									<div>
 									<ul>
 									<li><a onclick="getInterfaces()">Get Interfaces</a></li>
-									<li><a onclick="runCommand()">Run Command</a></li>
+									<li><a id="menu-run-cmds">Run Commands</a></li>
 									<li><a onclick="getConfig('xml')">Get Configuration (XML)</a></li>
 									<li><a onclick="getConfig('set')">Get Configuration (Set)</a></li>
 									</ul>
@@ -739,6 +752,30 @@ function getFirewalls() {
 							</div>
 							<div class="toolbar-title"><a href="https://${env.panorama}/" target="_blank">Panorama</a> Managed Firewalls</div>
 						`);
+
+						$('#menu-run-cmds').on('click', function () {
+							var checkbox = $('.toggler');
+							checkbox.prop('checked', !checkbox.prop('checked'));
+
+							if (!apiKey) {
+								window.alert('You need to log in to execute this action');
+								return;
+							}
+
+							var hostnames = [];
+							table.rows({ selected: true }).data().each((row) => {
+								var hostname = $.parseHTML(row.hostname)[0].innerText;
+								hostnames.push(hostname);
+							});
+
+							if (hostnames.length == 0) {
+								window.alert('Please select the rows this action should be applied to');
+								return;
+							}
+
+							$('.modal-run-cmds__bg').attr('style', 'display: flex;');
+							$('.modal-run-cmds__input').focus();
+						});
 					}
 
 					// Save current rows selection

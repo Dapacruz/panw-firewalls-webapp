@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"bytes"
 	"log"
+	"strings"
 
 	"github.com/astaxie/beego"
 )
@@ -16,7 +17,7 @@ type RunCommand struct {
 type RunCommandRequest struct {
 	Username string `form:"username"`
 	Password string `form:"password"`
-	Command string `form:"command"`
+	Commands string `form:"commands"`
 	Firewalls string `form:"firewalls"`
 }
 
@@ -26,8 +27,14 @@ func (c *RunCommand) Post() {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("Password: %v\n", request.Password)
-	cmd := exec.Command("static/py/run-panw-cmd.py","--user", request.Username, "--password", request.Password, "--command", request.Command, request.Firewalls)
+	cmds := strings.Split(request.Commands, ",")
+	args := []string{"--user", request.Username, "--password", request.Password}
+	args = append(args, cmds...)
+	args = append(args, request.Firewalls)
+
+	// fmt.Printf("Password: %v\n", request.Password)
+
+	cmd := exec.Command("static/py/run-panw-cmd.py", args...)
 	var outb, errb bytes.Buffer
 	cmd.Stdout = &outb
 	cmd.Stderr = &errb

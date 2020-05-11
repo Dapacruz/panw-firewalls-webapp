@@ -91,6 +91,7 @@ a:hover {
 	padding-left: 20px;
 }
 
+
 /* The Modal (background) */
 .modal {
 	display: none;
@@ -103,10 +104,9 @@ a:hover {
 	width: 100%;
 	height: 100%;
 	overflow-wrap: normal;
-	background-color: rgb(0, 0, 0);
 	background-color: rgba(0, 0, 0, 0.4);
 }
-/* Modal Content */
+
 .modal-content {
 	margin: auto;
 	padding: 0;
@@ -117,6 +117,7 @@ a:hover {
 	overflow-y: hidden;
 	background-color: #fefefe;
 }
+
 .modal-content #header {
 	top: 0;
 	padding-right: 10px;
@@ -125,12 +126,13 @@ a:hover {
 	background-color: #fefefe;
 	border-bottom: 1px solid rgba(170, 170, 170, 0.6);
 }
+
 .modal-content #results {
 	font-family: "Roboto Mono", monospace;
 	height: 97%;
 	width: 100%;
 	margin: auto;
-	padding: 2em 3em 0 3em;
+	padding: 5em 10em 0 10em;
 	white-space: pre-wrap;
 	overflow-y: scroll;
 	overflow-wrap: break-word;
@@ -142,6 +144,7 @@ a:hover {
 	width: 100%;
 	height: 40px;
 }
+
 #results-filter-input,
 #results-filter-button {
 	vertical-align: middle;
@@ -149,11 +152,78 @@ a:hover {
 	margin-top: 5px;
 	margin-right: 5px;
 }
+
 #results-filter-input {
 	-webkit-appearance: none;
 	padding-left: 5px;
 	height: 28.233330px;
 }
+
+
+.modal-run-cmds__bg {
+	display: none;
+	background-color: rgba(0, 0, 0, 0.8);
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	justify-content: center;
+	align-items: center;
+	z-index: 9999;
+}
+
+.modal-run-cmds__contents {
+	position: relative;
+	height: 400px;
+	width: 600px;
+	background-color: white;
+	text-align: left;
+	border-radius: 4px;
+}
+
+.modal-run-cmds__header {
+	margin-bottom: 30px;
+	padding-right: 10px;
+	padding-bottom: 5px;
+	background-color: #ddd;
+	text-align: right;
+	font-size: 35px;
+	color: #333;
+	border-bottom: 1px solid black;
+}
+
+.modal-run-cmds__close {
+	cursor: pointer;
+	color: white;
+}
+
+.modal-run-cmds__close:hover {
+	color: #999;
+}
+
+.modal-run-cmds__label {
+	margin-left: 30px;
+	font-size: 1rem;
+}
+
+.modal-run-cmds__input {
+	margin: 20px auto;
+	display: block;
+	width: 90%;
+	height: 200px;
+	padding: 8px;
+	border: 1px solid gray;
+	resize: none;
+	font-size: 1rem;
+}
+
+.modal-run-cmds__button {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	margin: 0 15px 15px 0;
+}
+
 
 /* The Close Button */
 .close {
@@ -178,12 +248,14 @@ a:hover {
 	top: 0;
 	width: 100%;
 	height: 100%;
+	background-color: rgba(0, 0, 0, 0.4);
 }
 #loading-progressbar img {
 	display: block;
 	margin: auto;
-	height: 35px;
+	height: 55px;
 	width: 400px;
+	z-index: 0;
 }
 
 tr.dtrg-start td {
