@@ -18,6 +18,8 @@
 .logo {
 	margin-bottom: 0;
 	padding: 10px 0 0 10px;
+	width: 15%;
+	height: 15%;
 }
 
 a {
@@ -29,7 +31,7 @@ a:visited {
 	color: #2f6a8a;
 }
 a:hover {
-	color: #a7c438;
+	color: #fa582d;
 }
 
 .toolbar {
@@ -49,7 +51,7 @@ a:hover {
 	color: inherit;
 }
 .toolbar a:hover {
-	color: #a7c438;
+	color: #fa582d;
 }
 
 #events {
@@ -296,13 +298,3 @@ td.notConnected {
 .dt-buttons {
 	float: right !important;
 }
-
-
-
-/* #button-bar {
-	float: right;
-	margin-top: 0;
-	margin-left: 20px;
-	margin-right: 20px;
-	margin-bottom: 5px;
-} */

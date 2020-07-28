@@ -21,149 +21,143 @@ var env = (function () {
 	return json;
 })();
 
-$(document).ready(function () {
-	// $.ajaxSetup({
-	// 	timout: 0
-	// });
+getFirewalls();
 
-	getFirewalls();
+$('#login').click(() => {
+	login();
+});
 
-	$('#login').click(() => {
-		login();
-	});
+$('#username, #password').on('keyup', function (event) {
+	if (event.keyCode == 13) {
+		event.preventDefault();
+		$('#login').click();
+	}
+});
 
-	$('#username, #password').on('keyup', function (event) {
-		if (event.keyCode == 13) {
-			event.preventDefault();
-			$('#login').click();
-		}
-	});
+// When the user clicks on <span> (x), close the modal
+$('span.close').click(() => {
+	$('body').toggleClass('noscroll');
+	$('#results-overlay').attr('style', 'display: none;');
+	$('#results').removeAttr('style');
+	$('#results-filter input').val('');
+});
 
-	// When the user clicks on <span> (x), close the modal
-	$('span.close').click(() => {
+// When the user clicks anywhere outside of the modal, close it
+$(window).click((event) => {
+	if (event.target == $('#results-overlay')[0]) {
 		$('body').toggleClass('noscroll');
-		$('#results-overlay').attr('style', 'display: none;');
-		$('#results').removeAttr('style');
+		$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
 		$('#results-filter input').val('');
-	});
+		$('#results-filter input').attr('placeholder', 'Filter');
+		$('#results').removeAttr('style');
+		$('#results').removeAttr('data-text-type');
+	}
+});
 
-	// When the user clicks anywhere outside of the modal, close it
-	$(window).click((event) => {
-		if (event.target == $('#results-overlay')[0]) {
-			$('body').toggleClass('noscroll');
-			$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
-			$('#results-filter input').val('');
-			$('#results-filter input').attr('placeholder', 'Filter');
-			$('#results').removeAttr('style');
-			$('#results').removeAttr('data-text-type');
-		}
-	});
+// Limit ctrl/cmd+a selection to results overlay
+$('.modal-content').keydown(function (e) {
+	if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
+		e.preventDefault();
+		selectText('results');
+	}
+});
 
-	// Limit ctrl/cmd+a selection to results overlay
-	$('.modal-content').keydown(function (e) {
+// Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
+$(document).keydown(function (e) {
+	if ($('.modal-content:hover').length != 0) {
 		if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
 			e.preventDefault();
 			selectText('results');
 		}
-	});
+	}
+});
 
-	// Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
-	$(document).keydown(function (e) {
-		if ($('.modal-content:hover').length != 0) {
-			if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
-				e.preventDefault();
-				selectText('results');
-			}
+$('#results-filter input').on('keyup change', function () {
+	// Pause for a few more characters
+	setTimeout(() => {
+		// Retrieve the input field text
+		var filter = $(this).val();
+
+		if ($('#results').attr('data-text-type') == 'xml') {
+			// Remove tag start and end characters
+			filter = filter.replace(/(<|>|\/)/g, '');
+			var startTag = new RegExp(`<${filter}[^/]*?>`, 'i');
+			var endTag;
+			var showTagChildren = false;
+
+			$('#results-body div').contents().each(function () {
+				if (filter == '') {
+					$(this).parent().show();
+				} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
+					// No closing tag match and showTagChildren is true
+					$(this).parent().show();
+				} else if ($(this).text().search(endTag) > 0 && showTagChildren) {
+					// Closing tag matches and showTagChildren is true
+					showTagChildren = false;
+					$(this).parent().show();
+				} else if (
+					$(this).text().search(startTag) > 0 &&
+					$(this)
+						.text()
+						.search(
+							new RegExp(`${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`)
+						) < 0
+				) {
+					// Filter matches and closing tag not on the same line
+					showTagChildren = true;
+					endTag = `${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`;
+					$(this).parent().show();
+				} else if ($(this).text().search(startTag) > 0) {
+					$(this).parent().show();
+				} else {
+					$(this).parent().hide();
+				}
+			});
+		} else {
+			var re = new RegExp(filter, 'i');
+			$('#results-body div').contents().each(function () {
+				// If the list item does not contain the text hide it
+				if ($(this).text().search(re) < 0) {
+					$(this).parent().hide();
+				} else {
+					// Show the list item if the phrase matches
+					$(this).parent().show();
+				}
+			});
 		}
+	}, 500);
+});
+
+$('#results-filter button').on('click clear', function () {
+	$('#results-filter input').val('');
+	$('#results-body div').contents().each(function () {
+		$(this).parent().show();
+	});
+	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
+});
+
+$('.modal-run-cmds__close').on('click', function () {
+	$('.modal-run-cmds__bg').attr('style', 'display: none;');
+	$('.modal-run-cmds__input').val('');
+});
+
+$('#modal-run-cmds-button').on('click', function () {
+	let input = $('.modal-run-cmds__input').val().split('\n');
+
+	let commands = [];
+	input.forEach((val) => {
+		cmd = val.trim()
+		if (!cmd) {
+			return;
+		}
+		commands.push("--command");
+		commands.push(cmd);
 	});
 
-	$('#results-filter input').on('keyup change', function () {
-		// Pause for a few more characters
-		setTimeout(() => {
-			// Retrieve the input field text
-			var filter = $(this).val();
+	$('.modal-run-cmds__bg').attr('style', 'display: none;');
+	$('.modal-run-cmds__input').val('');
 
-			if ($('#results').attr('data-text-type') == 'xml') {
-				// Remove tag start and end characters
-				filter = filter.replace(/(<|>|\/)/g, '');
-				var startTag = new RegExp(`<${filter}[^/]*?>`, 'i');
-				var endTag;
-				var showTagChildren = false;
-
-				$('#results-body div').contents().each(function () {
-					if (filter == '') {
-						$(this).parent().show();
-					} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
-						// No closing tag match and showTagChildren is true
-						$(this).parent().show();
-					} else if ($(this).text().search(endTag) > 0 && showTagChildren) {
-						// Closing tag matches and showTagChildren is true
-						showTagChildren = false;
-						$(this).parent().show();
-					} else if (
-						$(this).text().search(startTag) > 0 &&
-						$(this)
-							.text()
-							.search(
-								new RegExp(`${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`)
-							) < 0
-					) {
-						// Filter matches and closing tag not on the same line
-						showTagChildren = true;
-						endTag = `${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`;
-						$(this).parent().show();
-					} else if ($(this).text().search(startTag) > 0) {
-						$(this).parent().show();
-					} else {
-						$(this).parent().hide();
-					}
-				});
-			} else {
-				var re = new RegExp(filter, 'i');
-				$('#results-body div').contents().each(function () {
-					// If the list item does not contain the text hide it
-					if ($(this).text().search(re) < 0) {
-						$(this).parent().hide();
-					} else {
-						// Show the list item if the phrase matches
-						$(this).parent().show();
-					}
-				});
-			}
-		}, 500);
-	});
-
-	$('#results-filter button').on('click clear', function () {
-		$('#results-filter input').val('');
-		$('#results-body div').contents().each(function () {
-			$(this).parent().show();
-		});
-		$('tbody tr.dtrg-start>td:Contains("No group")').remove();
-	});
-
-	$('.modal-run-cmds__close').on('click', function () {
-		$('.modal-run-cmds__bg').attr('style', 'display: none;');
-		$('.modal-run-cmds__input').val('');
-	});
-
-	$('#modal-run-cmds-button').on('click', function () {
-		let input = $('.modal-run-cmds__input').val().split('\n');
-
-		let commands = [];
-		input.forEach((val) => {
-			cmd = val.trim()
-			if (!cmd) {
-				return;
-			}
-			commands.push("--command");
-			commands.push(cmd);
-		});
-
-		$('.modal-run-cmds__bg').attr('style', 'display: none;');
-		$('.modal-run-cmds__input').val('');
-
-		runCommands(commands);
-	});
+	runCommands(commands);
 });
 
 function selectText(containerid) {
@@ -702,7 +696,7 @@ function getFirewalls() {
 						table.columns().every(function () {
 							var that = this;
 
-							$('input', this.header()).click(function () {
+							$('input', this.header()).click(function (event) {
 								event.stopPropagation();
 							});
 
@@ -797,7 +791,7 @@ function getFirewalls() {
 					// Restore rows selection
 					table.rows(selectedRows).select();
 
-					$('td>a').click(function () {
+					$('a').click(function (event) {
 						event.stopPropagation();
 					});
 				},
