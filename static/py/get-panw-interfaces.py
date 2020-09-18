@@ -2,6 +2,8 @@
 
 ''' Remove nargs='*' from firewalls arg and split to make compatible with Golang calls and
     Comment out stdin.isatty() code block
+    Print header to sys.stdout
+    Add blank line in between firewalls (line 192)
 '''
 
 '''Get firewall interfaces
@@ -13,7 +15,7 @@ Author: David Cruz (davidcruz72@gmail.com)
 Python version >= 3.6
 
 Required Python packages:
-    None
+    lxml
 
 Features:
     Returns a list of firewalls interfaces
@@ -28,10 +30,9 @@ Features:
     Multi-threaded
 '''
 
+
 import argparse
 import json
-from collections import namedtuple
-import operator
 import os
 import os.path
 import queue
@@ -41,9 +42,7 @@ import ssl
 import sys
 import threading
 import urllib.request
-import xml.dom.minidom as MD
-import xml.etree.ElementTree as ET
-
+import lxml.etree as ET
 results = []
 
 print_queue = queue.Queue()
@@ -53,104 +52,238 @@ results_queue = queue.Queue()
 def sigint_handler(signum, frame):
     sys.exit(1)
 
-def query_api(args, host):
+
+def query_api(host, params):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
     # Get connected firewalls
-    params = urllib.parse.urlencode({
-        'type': 'op',
-        'cmd': '<show><interface>all</interface></show>',
-        'key': args.key,
-    })
+    params = urllib.parse.urlencode(params)
     url = f'https://{host}/api/?{params}'
 
     try:
-        with urllib.request.urlopen(url, timeout=30, context=ctx) as response:
+        with urllib.request.urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        sys.stdout.write(f'{host}: Unable to connect to host ({err})\n\n')
+        sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
 
     return xml
 
-def parse_xml(root, host):
-    hostname = host
-    Interface = namedtuple('Interface', 'hostname ifname state ip')
-    results = []
-    ifnet = root.findall('./result/ifnet/entry')
+
+def parse_interfaces(root, hostname):
+    interfaces = {}
+
     hw = root.findall('./result/hw/entry')
-    for l_int in ifnet:
-        ifname = l_int.find('name').text
-        ip = l_int.find('ip').text
-        for p_int in hw:
-            if p_int.find('name').text == ifname:
-                try:
-                    state = p_int.find('state').text
-                except AttributeError:
-                    state = 'N/A'
-        interface = Interface(hostname, ifname, state, ip)
-        results.append(interface)
-    return results
+    for int in hw:
+        ifname = int.find('name').text
+        mac = int.find('mac').text
+        status = int.find('st').text
+
+        interfaces[ifname] = {
+            'Firewall': hostname,
+            'MacAddress': mac,
+            'Status': status
+        }
+
+    ifnet = root.findall('./result/ifnet/entry')
+    for int in ifnet:
+        ifname = int.find('name').text
+        ip = int.find('ip').text or 'N/A'
+        zone = int.find('zone').text or 'N/A'
+        vsys = int.find("vsys").text
+        vsys = f'vsys{int.find("vsys").text}' if vsys != '0' else 'N/A'
+
+        interfaces[ifname] = {
+            **interfaces.get(ifname, {}),
+            'Firewall': hostname,
+            'Zone': zone,
+            'IpAddress': ip,
+            'vSys': vsys
+        }
+
+    return interfaces
+
+
+def parse_interface_config(root, interfaces):
+    for ifname, attrs in interfaces.items():
+        try:
+            attrs['Comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/comment').text
+        except AttributeError:
+            attrs['Comment'] = ''
+
+        # Collect the link state of physical interfaces only
+        if re.match(r'^ethernet\d+/\d+$', ifname):
+            try:
+                attrs['LinkState'] = root.find(
+                    f'./result/network/interface/ethernet/entry[@name="{ifname}"]/link-state').text
+            except AttributeError:
+                # Default interface state auto returns nothing
+                attrs['LinkState'] = 'auto'
+
+        # Collect the aggregate-group
+        if re.match(r'^ethernet\d+/\d+$', ifname):
+            try:
+                attrs['AggGrp'] = root.find(
+                    f'./result/network/interface/ethernet/entry[@name="{ifname}"]/aggregate-group').text
+            except AttributeError:
+                # Default interface state auto returns nothing
+                attrs['AggGrp'] = 'N/A'
+
+        try:
+            vrouter = root.xpath(f'//member[text()="{ifname}"]')[0].getparent().getparent().get('name')
+            attrs['VirtualRouter'] = vrouter if vrouter != None else 'N/A'
+        except IndexError:
+            attrs['VirtualRouter'] = 'N/A'
+
+    return interfaces
+
 
 def print_results(args, results):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
+    else:
+        fields = {
+            'Firewall': {
+                'width': 25,
+                'na': 'N/A'
+            },
+            'Interface': {
+                'width': 20,
+                'na': 'N/A'
+            },
+            'LinkState': {
+                'width': 9,
+                'na': 'N/A'
+            },
+            'Status': {
+                'width': 24,
+                'na': 'N/A'
+            },
+            'MacAddress': {
+                'width': 17,
+                'na': 'N/A'
+            },
+            'AggGrp': {
+                'width': 6,
+                'na': 'N/A'
+            },
+            'Zone': {
+                'width': 17,
+                'na': 'N/A'
+            },
+            'IpAddress': {
+                'width': 20,
+                'na': 'N/A'
+            },
+            'vSys': {
+                'width': 4,
+                'na': 'N/A'
+            },
+            'VirtualRouter': {
+                'width': 25,
+                'na': 'N/A'
+            },
+            'Comment': {
+                'width': 25,
+                'na': ''
+            },
+        }
 
-    # Print header
-    if not args.terse:
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"IpAddress" :20}', file=sys.stdout)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 20 :20}', file=sys.stdout)
+        # Print header
+        header = ''
+        hr = ''
+        first_iter = True
+        for field, attrs in fields.items():
+            if not first_iter:
+                header += '\t'
+                hr += '\t'
+            else:
+                first_iter = False
+            header += f'{field :<{attrs["width"]}}'
+            hr += f'{("=" * attrs["width"]) :<{attrs["width"]}}'
 
+        print('\n')
+        print(header, file=sys.stdout)
+        print(hr, file=sys.stdout)
+
+    # Print interfaces info
     current_hostname = ''
-    for hostname, ifname, state, ip in results:
-        if not current_hostname:
-            current_hostname = hostname
-        if args.terse:
-            try:
-                ip = re.match(regex, ip).group(1)
-            except AttributeError:
-                continue
-            if not args.if_state or args.if_state == state:
-                print(ip)
-        else:
-            # Insert a newline between hosts
-            if current_hostname != hostname:
-                print()
-            if not args.if_state or args.if_state == state:
-                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{ip :20}')
+    for interfaces in results:
+        for ifname, if_attrs in sorted(interfaces.items()):
+            hostname = if_attrs['Firewall']
+            if not current_hostname:
+                current_hostname = hostname
+
+            if_status = if_attrs.get('Status', 'N/A')
+            if args.terse:
+                try:
+                    ip = re.match(regex, if_attrs.get('IpAddress', '')).group(1)
+                except AttributeError:
+                    continue
+
+                if not args.if_status or args.if_status in if_status:
+                    print(ip)
+            else:
+                # Insert a newline between hosts
+                if current_hostname != hostname:
+                    print()
+                if not args.if_status or args.if_status in if_status:
+                    line = ''
+                    first_iter = True
+                    for field in fields.keys():
+                        if not first_iter:
+                            line += '\t'
+                        else:
+                            first_iter = False
+
+                        if field == 'Interface':
+                            line += f'{ifname :<{fields["Interface"]["width"]}}'
+                            continue
+
+                        attr = if_attrs.get(field, fields[field]["na"])
+                        line += f'{attr :<{fields[field]["width"]}}'
+
+                    print(line)
             current_hostname = hostname
 
 
 def worker(args, host):
-    xml = query_api(args, host)
+    url_params = {
+        'type': 'op',
+        'cmd': '<show><interface>all</interface></show>',
+        'key': args.key,
+    }
+    xml = query_api(host, url_params)
 
     if args.raw_output:
-        root = ET.fromstring(xml)
-
-        # Insert hostname into the response
-        hostname = ET.Element('hostname')
-        hostname.text = host
-        root.insert(0, hostname)
-
-        # Pretty print and convert to a list
-        output = MD.parseString(ET.tostring(root)).toprettyxml().replace('^\s*\n$', '').split('\n')
-        # Remove empty list elements (blank lines)
-        output = [line for line in output if line.strip() != '']
-
-        print_queue.put(output)
+        print_queue.put(xml.split('\n'))
         return
 
+    # Parse interface operational information
     try:
-        root = ET.fromstring(xml)
+        interfaces = parse_interfaces(ET.fromstring(xml), host)
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
 
-    interfaces = parse_xml(root, host)
-    sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
-    results_queue.put(sorted_interfaces)
+    url_params = {
+        'type': 'config',
+        'action': 'show',
+        'xpath': 'devices/entry/network',
+        'key': args.key,
+    }
+    xml = query_api(host, url_params)
+    root = ET.fromstring(xml)
+
+    # Parse interface configuration
+    try:
+        interfaces = parse_interface_config(root, interfaces)
+    except TypeError as err:
+        raise SystemExit(f'Unable to parse XML! ({err})')
+
+    results_queue.put(interfaces)
 
 
 def print_manager():
@@ -166,7 +299,7 @@ def results_manager():
 
     while True:
         result = results_queue.get()
-        results += result
+        results.append(result)
         results_queue.task_done()
 
 
@@ -180,10 +313,15 @@ def main():
     parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
     parser.add_argument('-t', '--terse', action='store_true', help='Output IP addresses only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
-    parser.add_argument('--if-state', metavar='', choices=['up', 'down'], help='Filter on interface state')
+    parser.add_argument('--if-status', metavar='', choices=['up', 'down'], help='Filter on interface state')
+    parser.add_argument('--if-state', metavar='', choices=['up', 'down'], help='DEPRECATED: Filter on interface state')
     args = parser.parse_args()
 
     args.firewalls = args.firewalls.split()
+
+    # Deprecated: Remove args.if_state in the near future
+    if args.if_state:
+        args.if_status = args.if_state
 
     if 'USERPROFILE' in os.environ:
         settings_path = os.path.join(os.environ["USERPROFILE"], '.panw-settings.json')
@@ -219,7 +357,8 @@ def main():
     if args.update:
         print('\nUpdating saved settings ...\n')
         settings['key'] = input(f'New API Key [{settings["key"]}]: ') or settings['key']
-        settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
+        settings['default_firewall'] = input(
+            f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
         with open(settings_path, 'w') as f:
             json.dump(settings, f, sort_keys=True, indent=2)
         print('\nSettings updated!')
@@ -255,7 +394,7 @@ def main():
         t = threading.Thread(target=worker, args=(args, host))
         worker_threads.append(t)
         t.start()
-    
+
     for t in worker_threads:
         t.join()
 

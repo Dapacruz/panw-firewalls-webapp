@@ -33,7 +33,7 @@ func (c *GetInterfaces) Post() {
 		log.Fatal(err)
 	}
 
-	// fmt.Println("out:", out, "err:", errb.String())
+	// fmt.Println("out:", outb.String(), "err:", errb.String())
 
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }

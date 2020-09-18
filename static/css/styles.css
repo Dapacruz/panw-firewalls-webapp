@@ -115,9 +115,10 @@ a:hover {
 	padding-bottom: 1em;
 	border: 1px solid #888;
 	height: 100%;
-	width: 85%;
+	width: 95%;
 	overflow-y: hidden;
 	background-color: #fefefe;
+	text-align: center;
 }
 
 .modal-content #header {
@@ -135,9 +136,11 @@ a:hover {
 	width: 100%;
 	margin: auto;
 	padding: 5em 10em 0 10em;
-	white-space: pre-wrap;
+	white-space: pre;
 	overflow-y: scroll;
 	overflow-wrap: break-word;
+	tab-size: 2.5em;
+	text-align: left;
 }
 
 #results-filter {

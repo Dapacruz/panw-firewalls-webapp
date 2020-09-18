@@ -215,13 +215,14 @@ function getInterfaces() {
 
 			// Wrap header
 			modifiedResponse[0] = `<div id="results-header">${modifiedResponse[0]}`;
-			modifiedResponse[1] = `${modifiedResponse[1]}</div>`;
-			modifiedResponse[2] = `<div id="results-body">${modifiedResponse[2]}`;
+			modifiedResponse[3] = `${modifiedResponse[3]}</div>`;
+			modifiedResponse[4] = `<div id="results-body">${modifiedResponse[4]}`;
 			modifiedResponse[-1] = `${modifiedResponse[-1]}</div>`;
 
 			$('#results').html(modifiedResponse.join(''));
 
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
+			$('#results').attr('style', 'padding: 1em 2em 0 5em;');
 			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
 			$('#results').scrollTop(0);
