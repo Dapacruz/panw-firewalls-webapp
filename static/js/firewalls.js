@@ -5,6 +5,8 @@
 var table;
 var tableData = [];
 var tableInitialized = false;
+var username;
+var password;
 var apiKey;
 var loginTimeout;
 var env = (function () {
@@ -87,14 +89,14 @@ $('#results-filter input').on('keyup change', function () {
 
 			$('#results-body div').contents().each(function () {
 				if (filter == '') {
-					$(this).parent().show();
+					$(this).parent().css('display', '');
 				} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
 					// No closing tag match and showTagChildren is true
-					$(this).parent().show();
+					$(this).parent().css('display', '');
 				} else if ($(this).text().search(endTag) > 0 && showTagChildren) {
 					// Closing tag matches and showTagChildren is true
 					showTagChildren = false;
-					$(this).parent().show();
+					$(this).parent().css('display', '');
 				} else if (
 					$(this).text().search(startTag) > 0 &&
 					$(this)
@@ -106,11 +108,11 @@ $('#results-filter input').on('keyup change', function () {
 					// Filter matches and closing tag not on the same line
 					showTagChildren = true;
 					endTag = `${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`;
-					$(this).parent().show();
+					$(this).parent().css('display', '');
 				} else if ($(this).text().search(startTag) > 0) {
-					$(this).parent().show();
+					$(this).parent().css('display', '');
 				} else {
-					$(this).parent().hide();
+					$(this).parent().css('display', 'none');
 				}
 			});
 		} else {
@@ -118,10 +120,10 @@ $('#results-filter input').on('keyup change', function () {
 			$('#results-body div').contents().each(function () {
 				// If the list item does not contain the text hide it
 				if ($(this).text().search(re) < 0) {
-					$(this).parent().hide();
+					$(this).parent().css('display', 'none');
 				} else {
 					// Show the list item if the phrase matches
-					$(this).parent().show();
+					$(this).parent().css('display', '');
 				}
 			});
 		}
@@ -131,7 +133,7 @@ $('#results-filter input').on('keyup change', function () {
 $('#results-filter button').on('click clear', function () {
 	$('#results-filter input').val('');
 	$('#results-body div').contents().each(function () {
-		$(this).parent().show();
+		$(this).parent().css('display', '');
 	});
 	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 });
@@ -173,6 +175,131 @@ function selectText(containerid) {
 	}
 }
 
+function upgradeDynamicContent() {
+	var checkbox = $('.toggler');
+	checkbox.prop('checked', !checkbox.prop('checked'));
+
+	if (!apiKey) {
+		window.alert('You need to log in to execute this action');
+		return;
+	}
+
+	var hostnames = [];
+	table.rows({ selected: true }).data().each((row) => {
+		var hostname = $.parseHTML(row.hostname)[0].innerText;
+		hostnames.push(hostname);
+	});
+
+	if (hostnames.length == 0) {
+		window.alert('Please select the firewalls this action should be applied to');
+		return;
+	}
+
+	$('#loading-progressbar').attr('style', 'display: block;');
+
+	$.ajax({
+		url: `https://${env.ansible_tower}/api/v2/job_templates/50/launch/`,
+		type: 'POST',
+		headers: {
+		  "Authorization": "Basic " + btoa(`${username}:${password}`)
+		},
+		data: `{ "limit": "${hostnames.join(',')}" }`,
+		contentType: 'application/json',
+		dataType: 'json',
+		success: async (response) => {
+			var jobId = response.id;
+			var jobStatus;
+			var jobReport;
+
+			do {
+				await sleep(5000);
+				jobStatus = getAnsibleJobStatus(jobId);
+			} while (['pending', 'running'].includes(jobStatus));
+
+			jobReport = fetchAnsibleJobReport(jobId);
+
+			console.log(jobReport);
+
+			$('#results-filter input').attr('placeholder', 'Filter');
+
+			// Wrap all lines and replace empty lines with a <br>
+			var modifiedResponse = [];
+			jobReport.slice(jobReport.indexOf('PLAY RECAP')).split('\n').forEach((val) => {
+				if (val == '') {
+					modifiedResponse.push(`<br>`);
+				} else {
+					modifiedResponse.push(`<div>${val}</div>`);
+				}
+			});
+
+			// Wrap header
+			modifiedResponse[0] = `<div id="results-header">${modifiedResponse[0]}</div>`;
+			modifiedResponse[1] = `<div id="results-body">${modifiedResponse[1]}`;
+			modifiedResponse[-1] = `${modifiedResponse[-1]}</div>`;
+
+			$('#results').html(modifiedResponse.join(''));
+			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
+			$('#results-filter input').val('');
+			$('#results-overlay').attr('style', 'display: block;');
+			$('#results').scrollTop(0);
+			$('body').toggleClass('noscroll');
+
+			$('#loading-progressbar').attr('style', 'display: none;');
+		},
+		error: (xhr, status, error) => {
+			$('#loading-progressbar').attr('style', 'display: none;');
+			window.alert('Something went seriously wrong');
+		}
+	});
+}
+
+function getAnsibleJobStatus(jobId) {
+	var jobStatus;
+
+	$.ajax({
+		url: `https://${env.ansible_tower}/api/v2/jobs/${jobId}/activity_stream/`,
+		type: 'GET',
+		headers: {
+			"Authorization": "Basic " + btoa(`${username}:${password}`)
+		},
+		dataType: 'json',
+		async: false,
+		success: function (response) {
+			jobStatus = response.results[0].summary_fields.job[0].status;
+		},
+		error: function (xhr, status, error) {}
+	});
+
+	return jobStatus;
+}
+
+function fetchAnsibleJobReport(jobId) {
+	var jobReport;
+	$.ajax({
+		url: `https://${env.ansible_tower}/api/v2/jobs/${jobId}/stdout?format=txt_download`,
+		type: 'GET',
+		headers: {
+		  "Authorization": "Basic " + btoa(`${username}:${password}`)
+		},
+		dataType: 'text',
+		async: false,
+		success: function (response) {
+			jobReport = response;
+		},
+		error: function (xhr, status, error) {}
+	});
+
+	return jobReport;
+}
+
+function sleep(n) {
+	return new Promise(done => {
+	  setTimeout(() => {
+		done();
+	  }, n);
+	});
+}
+
 function getInterfaces() {
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
@@ -189,7 +316,7 @@ function getInterfaces() {
 	});
 
 	if (hostnames.length == 0) {
-		window.alert('Please select the rows this action should be applied to');
+		window.alert('Please select the firewalls this action should be applied to');
 		return;
 	}
 
@@ -215,14 +342,14 @@ function getInterfaces() {
 
 			// Wrap header
 			modifiedResponse[0] = `<div id="results-header">${modifiedResponse[0]}`;
-			modifiedResponse[3] = `${modifiedResponse[3]}</div>`;
-			modifiedResponse[4] = `<div id="results-body">${modifiedResponse[4]}`;
+			modifiedResponse[1] = `${modifiedResponse[1]}</div>`;
+			modifiedResponse[2] = `<div id="results-body">${modifiedResponse[2]}`;
 			modifiedResponse[-1] = `${modifiedResponse[-1]}</div>`;
 
 			$('#results').html(modifiedResponse.join(''));
 
 			$('#results div').attr('style', 'font-family: "Roboto Mono", monospace;');
-			$('#results').attr('style', 'padding: 1em 2em 0 5em;');
+			// $('#results').attr('style', 'padding: 1em 2em 0 5em;');
 			$('#results-filter input').val('');
 			$('#results-overlay').attr('style', 'display: block;');
 			$('#results').scrollTop(0);
@@ -237,10 +364,6 @@ function getInterfaces() {
 }
 
 function runCommands(commands) {
-	var username = $('#username').val();
-	// Encode to handle symbols that break AJAX requests
-	var password = encodeURIComponent($('#password').val());
-
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
 		var hostname = $.parseHTML(row.hostname)[0].innerText;
@@ -256,7 +379,7 @@ function runCommands(commands) {
 	$.ajax({
 		url: '/run/command',
 		type: 'POST',
-		data: `username=${username}&password=${password}&commands=${commands.join(',')}&firewalls=${hostnames.join(' ')}`,
+		data: `username=${username}&password=${encodeURIComponent(password)}&commands=${commands.join(',')}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
 		success: function (response) {
 			$('#results-filter input').attr('placeholder', 'Filter');
@@ -296,9 +419,6 @@ function runCommands(commands) {
 }
 
 function getConfig(format) {
-	var username = $('#username').val();
-	// Encode to handle symbols that break AJAX requests
-	var password = encodeURIComponent($('#password').val());
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
 
@@ -314,7 +434,7 @@ function getConfig(format) {
 	});
 
 	if (hostnames.length == 0) {
-		window.alert('Please select the rows this action should be applied to');
+		window.alert('Please select the firewalls this action should be applied to');
 		return;
 	}
 
@@ -323,7 +443,7 @@ function getConfig(format) {
 	$.ajax({
 		url: '/get/config',
 		type: 'POST',
-		data: `format=${format}&username=${username}&password=${password}&key=${apiKey}&firewalls=${hostnames.join(
+		data: `format=${format}&username=${username}&password=${encodeURIComponent(password)}&key=${apiKey}&firewalls=${hostnames.join(
 			' '
 		)}`,
 		dataType: 'text',
@@ -384,16 +504,15 @@ function clearSearch() {
 }
 
 function login() {
-	var username = $('#username').val();
-	// Encode to handle symbols that break AJAX requests
-	var password = encodeURIComponent($('#password').val());
+	username = $('#username').val();
+	password = $('#password').val();
 
 	$('#auth-event').text('Authenticating ...');
 	$.ajax({
 		url: `https://${env.panorama}/api/?`,
 		type: 'POST',
 		crossDomain: true,
-		data: `type=keygen&user=${username}&password=${password}`,
+		data: `type=keygen&user=${username}&password=${encodeURIComponent(password)}`,
 		dataType: 'xml',
 		success: function (response) {
 			apiKey = $(response).find('key').text();
@@ -527,8 +646,19 @@ function getFirewalls() {
 						var uptime = $(this).children('uptime').text();
 						var swVersion = $(this).children('sw-version').text();
 						var tags = Array.from(firewallTags[serial]).sort().join(', <br>');
-						var haState = $(this).children('ha').children('state').text();
-						haState = `${haState.charAt(0).toUpperCase()}${haState.slice(1)}`;
+
+						var haState = $(this).children('ha').children('state').text() || 'standalone';
+						if (haState === 'active') {
+							ha_led = "static/img/green_led.png"
+						} else if (haState === 'passive') {
+							ha_led = "static/img/yellow_led.png"
+						} else if (haState !== 'standalone') {
+							ha_led = "static/img/red_led.png"
+						} else {
+							ha_led = "static/img/gray_led.png"
+						}
+
+						haState = `<img src="${ha_led}" alt="${haState}" style="padding-right: .2em; vertical-align: middle;"><span style="vertical-align: middle;">${haState.charAt(0).toUpperCase()}${haState.slice(1)}</span>`;
 
 						var vSystems = [];
 						$(this).children('vsys').children('entry').each(function () {
@@ -541,16 +671,17 @@ function getFirewalls() {
 
 						if (hostname) {
 							hostname = `${hostname.toLowerCase()}.${env.domain}`;
+							hostname = `<a target="_blank" href="https://${hostname}">${hostname}</a>`
 
 							tableData.push({
-								hostname: `<a target="_blank" href="https://${hostname}">${hostname}</a>`,
+								hostname: hostname,
+								haState: haState,
 								ipAddress: ipAddress,
 								serialNumber: serial,
 								modelNumber: model,
 								connected: connected,
 								uptime: uptime,
 								swVersion: swVersion,
-								haState: haState,
 								tags: tags,
 								vSystems: vSystems,
 								haPair: haPair
@@ -577,18 +708,18 @@ function getFirewalls() {
 							autoWidth: false,
 							columns: [
 								{ data: 'hostname' },
+								{ data: 'haState' },
 								{ data: 'ipAddress' },
 								{ data: 'serialNumber' },
 								{ data: 'modelNumber' },
 								{ data: 'connected' },
 								{ data: 'uptime' },
 								{ data: 'swVersion' },
-								{ data: 'haState' },
 								{ data: 'tags' },
 								{ data: 'vSystems' },
 								{ data: 'haPair' }
 							],
-							columnDefs: [{ targets: [2, 6, 7, 10], visible: false }],
+							columnDefs: [{ targets: [3, 4, 7, 10], visible: false }],
 							rowGroup: false,
 							// rowGroup: {
 							// 	dataSrc: 'haPair',
@@ -621,8 +752,9 @@ function getFirewalls() {
 								't' +
 								'<"fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
 							createdRow: (row, data, dataIndex, cells) => {
-								if (data['connected'] == `No`) {
-									$(cells[4]).addClass('notConnected');
+								if (data['connected'] === 'No') {
+									$(cells).addClass('notConnected');
+									$(cells[5]).css('font-weight', '600').css('color', 'red');
 								}
 							},
 							buttons: [
@@ -701,7 +833,7 @@ function getFirewalls() {
 								event.stopPropagation();
 							});
 
-							$('input', this.header()).on('keyup change clear', function () {
+							$('input', this.header()).on('keydown change clear', function () {
 								// Pause for a few more characters
 								setTimeout(() => {
 									if (this.value) {
@@ -714,7 +846,7 @@ function getFirewalls() {
 										that.search(this.value, 'regex').draw();
 									}
 									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
-								}, 500);
+								}, 1000);
 							});
 						});
 
@@ -736,10 +868,16 @@ function getFirewalls() {
 								<div>
 									<div>
 									<ul>
+									<li><h3>PAN-OS API</h3></li>
 									<li><a onclick="getInterfaces()">Get Interfaces</a></li>
 									<li><a id="menu-run-cmds">Run Commands</a></li>
 									<li><a onclick="getConfig('xml')">Get Configuration (XML)</a></li>
 									<li><a onclick="getConfig('set')">Get Configuration (Set)</a></li>
+									</ul>
+									<br>
+									<ul>
+									<li><h3>Ansible Playbooks</h3></li>
+									<li><a onclick="upgradeDynamicContent()">Upgrade Dynamic Content</a></li>
 									</ul>
 									</div>
 								</div>
@@ -764,7 +902,7 @@ function getFirewalls() {
 							});
 
 							if (hostnames.length == 0) {
-								window.alert('Please select the rows this action should be applied to');
+								window.alert('Please select the firewalls this action should be applied to');
 								return;
 							}
 

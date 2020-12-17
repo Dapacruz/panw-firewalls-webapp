@@ -33,8 +33,10 @@ import urllib.request
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 
+
 def sigint_handler(signum, frame):
     sys.exit(1)
+
 
 def query_api(args):
     # Disable certifcate verification
@@ -57,17 +59,17 @@ def query_api(args):
         with urllib.request.urlopen(url, timeout=30, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        raise SystemExit(f'{args.panorama}: Unable to connect to host ({err})')
+        sys.stderr.write(f'{args.panorama}: Unable to connect to host ({err})\n')
+        sys.exit(1)
 
     return xml
+
 
 def parse_xml(args, root):
     results = {}
     for firewall in root.findall('./result/devices/entry'):
         connected = firewall.find('connected').text
-        if args.terse and connected != 'yes':
-            continue
-        elif (args.state == 'disconnected' or args.state == 'not-connected') and connected == 'yes':
+        if (args.state == 'disconnected' or args.state == 'not-connected') and connected == 'yes':
             continue
 
         try:
@@ -94,7 +96,7 @@ def parse_xml(args, root):
             sw_version = firewall.find('sw-version').text
         except AttributeError:
             sw_version = 'n/a'
-        
+
         results.update({
             serial: {
                 'hostname': hostname,
@@ -105,32 +107,37 @@ def parse_xml(args, root):
                 'sw_version': sw_version,
             }
         })
-    
+
     return results
+
 
 def output(args, results):
     # Print header
     if not args.terse:
-        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Connected" :9}\t{"Uptime" :20}\t{"SwVersion" :9}', file=sys.stderr)
-        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 9 :9}\t{"=" * 20 :20}\t{"=" * 9 :9}', file=sys.stderr)
+        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Connected" :9}\t{"Uptime" :20}\t{"SwVersion" :9}')
+        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 9 :9}\t{"=" * 20 :20}\t{"=" * 9 :9}')
 
     for serial, attrib in results.items():
         if args.terse:
-            print(attrib['hostname'])
+            if attrib['hostname'] != 'n/a':
+                print(attrib['hostname'])
         else:
             print(f'{attrib["hostname"] :30}\t{attrib["mgmt_ip"] :15}\t{serial :12}\t{attrib["model"] :8}\t{attrib["connected"] :9}\t{attrib["uptime"] :20}\t{attrib["sw_version"] :9}')
 
     return
 
+
 def main():
     # Ctrl+C graceful exit
     signal.signal(signal.SIGINT, sigint_handler)
 
-    parser = argparse.ArgumentParser(description='Returns a list of firewalls including management address and serial number')
+    parser = argparse.ArgumentParser(
+        description='Returns a list of firewalls including management address and serial number')
     parser.add_argument('panorama', type=str, nargs='?', help='Panorama device to query')
     parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
     parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
-    parser.add_argument('-s', '--state', choices=['connected', 'disconnected', 'not-connected', 'any', 'all'], default='all', help='Connection state')
+    parser.add_argument('-s', '--state', choices=['connected', 'disconnected',
+                                                  'not-connected', 'any', 'all'], default='all', help='Connection state')
     parser.add_argument('-t', '--terse', action='store_true', help='Output firewall names only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     args = parser.parse_args()
@@ -169,7 +176,8 @@ def main():
     if args.update:
         print('\nUpdating saved settings ...\n')
         settings['key'] = input(f'New API Key [{settings["key"]}]: ') or settings['key']
-        settings['default_panorama'] = input(f'New Default Panorama Host [{settings["default_panorama"]}]: ') or settings['default_panorama']
+        settings['default_panorama'] = input(
+            f'New Default Panorama Host [{settings["default_panorama"]}]: ') or settings['default_panorama']
         with open(settings_path, 'w') as f:
             json.dump(settings, f, sort_keys=True, indent=2)
         print('\nSettings updated!')
@@ -190,7 +198,8 @@ def main():
     try:
         root = ET.fromstring(xml)
     except TypeError as err:
-        raise SystemExit(f'Unable to parse XML! ({err})')
+        sys.stderr.write(f'Unable to parse XML! ({err})\n')
+        sys.exit(1)
 
     firewalls = parse_xml(args, root)
 
