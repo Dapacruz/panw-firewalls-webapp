@@ -275,7 +275,22 @@ td {
 	text-align: center;
 }
 td.notConnected {
-	color: red;
+	background-color: rgba(255, 0, 0, 0.1) !important;
+}
+td.haError {
+	background-color: rgba(255, 0, 0, 0.1) !important;
+}
+td.haActive {
+	background-color: rgba(0, 128, 0, 0.1) !important;
+}
+td.haPassive {
+	background-color: rgba(255, 255, 0, 0.1) !important;
+}
+td.haStandalone {
+	background-color: rgba(0, 128, 0, 0.1) !important;
+}
+td.haOther {
+	background-color: rgba(255, 0, 0, 0.1) !important;
 }
 .end-table-group td {
 	padding: 0 !important;
