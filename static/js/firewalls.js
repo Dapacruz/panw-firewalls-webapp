@@ -509,7 +509,7 @@ function login() {
 
 	$('#auth-event').text('Authenticating ...');
 	$.ajax({
-		url: `https://${env.panorama}/api/?`,
+		url: `https://${env.firewall}/api/?`,
 		type: 'POST',
 		crossDomain: true,
 		data: `type=keygen&user=${username}&password=${encodeURIComponent(password)}`,
