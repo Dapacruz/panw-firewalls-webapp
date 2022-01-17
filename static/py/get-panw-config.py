@@ -68,7 +68,7 @@ def parse_args():
                                        'pushed-shared-policy',
                                        'merged',
                                        'synced',
-                                       'synced-diff'], default='running', help='Config type')
+                                       'synced-diff'], default='merged', help='Config type')
 
     # Split space separated firewalls string
     args =  parser.parse_args()
