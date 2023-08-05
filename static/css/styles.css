@@ -27,9 +27,11 @@ a {
 	color: #2f6a8a;
 	transition: color 0.2s ease;
 }
+
 a:visited {
 	color: #2f6a8a;
 }
+
 a:hover {
 	color: #fa582d;
 }
@@ -41,15 +43,19 @@ a:hover {
 	margin-bottom: 5px;
 	margin-right: 20px;
 }
+
 .toolbar-title {
 	margin-left: 30px;
 }
+
 .toolbar a:link {
 	color: inherit;
 }
+
 .toolbar a:visited {
 	color: inherit;
 }
+
 .toolbar a:hover {
 	color: #fa582d;
 }
@@ -75,17 +81,20 @@ a:hover {
 	margin-right: .5em;
 	min-width: 350px;
 }
+
 #username,
 #password {
 	height: 2.3em;
 	padding-left: .3em;
 	font-size: .8em;
 }
+
 #login {
 	height: 2.3em;
 	grid-column: 3;
 	font-size: .8em;
 }
+
 #auth-event {
 	grid-column: span 3;
 	text-align: center;
@@ -237,6 +246,7 @@ a:hover {
 	font-size: 28px;
 	font-weight: bold;
 }
+
 .close:hover,
 .close:focus {
 	color: #000;
@@ -255,6 +265,7 @@ a:hover {
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0.4);
 }
+
 #loading-progressbar img {
 	display: block;
 	margin: auto;
@@ -270,28 +281,36 @@ tr.dtrg-start td {
 	font-size: .75em;
 	font-weight: normal !important;
 }
+
 td {
 	vertical-align: top;
 	text-align: center;
 }
+
 td.notConnected {
 	background-color: rgba(255, 0, 0, 0.1) !important;
 }
+
 td.haError {
 	background-color: rgba(255, 0, 0, 0.1) !important;
 }
+
 td.haActive {
 	background-color: rgba(0, 128, 0, 0.1) !important;
 }
+
 td.haPassive {
 	background-color: rgba(255, 255, 0, 0.1) !important;
 }
+
 td.haStandalone {
 	background-color: rgba(0, 128, 0, 0.1) !important;
 }
+
 td.haOther {
 	background-color: rgba(255, 0, 0, 0.1) !important;
 }
+
 .end-table-group td {
 	padding: 0 !important;
 	background-color: rgb(179, 179, 179) !important;
@@ -315,4 +334,20 @@ td.haOther {
 
 .dt-buttons {
 	float: right !important;
+}
+
+.ansible-ok {
+	color: #119c41;
+}
+
+.ansible-changed {
+	color: #c9d302;
+}
+
+.ansible-skipped {
+	color: rgb(27, 57, 211);
+}
+
+.ansible-fatal {
+	color: #ff2f2f;
 }

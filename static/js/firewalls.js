@@ -177,7 +177,7 @@ function selectText(containerid) {
 
 function getDeviceState(jobID) {
 	let extra_vars = {
-		save_config_snapshot: "Yes",
+		save_config_snapshot: "No",
 		smtp_to: `${username.slice(2)}@${env.domain}`
 	};
 	executeAnsiblePlaybook(jobID, extra_vars);
@@ -241,11 +241,47 @@ function executeAnsiblePlaybook(jobID, extraVars = {}) {
 
 			// Wrap all lines and replace empty lines with a <br>
 			var modifiedResponse = [];
-			jobReport.slice(jobReport.indexOf('PLAY RECAP')).split('\n').forEach((val) => {
+			jobReport.split('\n').forEach((val) => {
 				if (val == '') {
 					modifiedResponse.push(`<br>`);
 				} else {
-					modifiedResponse.push(`<div>${val}</div>`);
+					// Colorize play recap hostname
+					if (/(unreachable|failed)=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.[^\s]+)(.+)/, '<span class="ansible-fatal">$1</span>$2');
+					} else if (/changed=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.[^\s]+)(.+)/, '<span class="ansible-changed">$1</span>$2');
+					} else if (/ok=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.[^\s]+)(.+)/, '<span class="ansible-ok">$1</span>$2');
+					} else if (/(skipped|rescued|ignored)=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.[^\s]+)(.+)/, '<span class="ansible-skipped">$1</span>$2');
+					}
+
+					// Colorize play recap change results
+					if (/ok=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.+)(ok=[1-9]\d*)(.*)/, '$1<span class="ansible-ok">$2</span>$3');
+					}
+					if (/changed=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.+)(changed=[1-9]\d*)(.*)/, '$1<span class="ansible-changed">$2</span>$3');
+					}
+					if (/(skipped|rescued|ignored)=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.+)((?:skipped|rescued|ignored)=[1-9]\d*)(.*)/, '$1<span class="ansible-skipped">$2</span>$3');
+					}
+					if (/(unreachable|failed)=[1-9]\d*/.test(val)) {
+						val = val.replace(/^(.+)((?:unreachable|failed)=[1-9]\d*)(.*)/, '$1<span class="ansible-fatal">$2</span>$3');
+					}
+
+					// Colorize task results
+					if (/^ok:/.test(val)) {
+						modifiedResponse.push(`<div class="ansible-ok">${val}</div>`);
+					} else if (/^changed:/.test(val)) {
+						modifiedResponse.push(`<div class="ansible-changed">${val}</div>`);
+					} else if (/^(skipping|rescuing|ingoring):/.test(val)) {
+						modifiedResponse.push(`<div class="ansible-skipped">${val}</div>`);
+					} else if (/^fatal:/.test(val)) {
+						modifiedResponse.push(`<div class="ansible-fatal">${val}</div>`);
+					} else {
+						modifiedResponse.push(`<div>${val}</div>`);
+					}
 				}
 			});
 
@@ -665,6 +701,11 @@ function getFirewalls() {
 						var swVersion = $(this).children('sw-version').text();
 						var tags = Array.from(firewallTags[serial]).sort().join(', <br>');
 
+						// Skip firewalls that have not been staged
+						if (tags.length === 0 || tags.includes('Staging')) {
+							return true;
+						}
+
 						var haState = $(this).children('ha').children('state').text() || 'standalone';
 						if (haState === 'active') {
 							ha_led = "static/img/green_led.png";
@@ -695,9 +736,9 @@ function getFirewalls() {
 								hostname: hostname,
 								haState: haState,
 								ipAddress: ipAddress,
+								connected: connected,
 								serialNumber: serial,
 								modelNumber: model,
-								connected: connected,
 								uptime: uptime,
 								swVersion: swVersion,
 								tags: tags,
@@ -728,16 +769,16 @@ function getFirewalls() {
 								{ data: 'hostname' },
 								{ data: 'haState' },
 								{ data: 'ipAddress' },
+								{ data: 'connected' },
 								{ data: 'serialNumber' },
 								{ data: 'modelNumber' },
-								{ data: 'connected' },
 								{ data: 'uptime' },
 								{ data: 'swVersion' },
 								{ data: 'tags' },
 								{ data: 'vSystems' },
 								{ data: 'haPair' }
 							],
-							columnDefs: [{ targets: [3, 4, 7, 10], visible: false }],
+							columnDefs: [{ targets: [4, 6, 10], visible: false }],
 							rowGroup: false,
 							// rowGroup: {
 							// 	dataSrc: 'haPair',
@@ -803,7 +844,7 @@ function getFirewalls() {
 										id: 'select-all-rows'
 									},
 									action: function () {
-										table.rows().select();
+										table.rows({ page: 'current' }).select();
 										$('#select-all-rows').addClass('hide');
 										$('#deselect-all-rows').removeClass('hide');
 									}
@@ -843,7 +884,7 @@ function getFirewalls() {
 						$('#clear-search').toggleClass('hide');
 						$('#deselect-all-rows').toggleClass('hide');
 
-						// Apply the search
+						// Apply the column search
 						table.columns().every(function () {
 							var that = this;
 
@@ -860,8 +901,15 @@ function getFirewalls() {
 										$('#clear-search').addClass('hide');
 									}
 
-									if (that.search() !== this.value) {
-										that.search(this.value, 'regex').draw();
+									if (this.value.startsWith('!')) {
+										value = `^((?!${this.value.replace('!', '')}).)*$`;
+										if (that.search() !== value) {
+											that.search(value, 'regex').draw();
+										}
+									} else {
+										if (that.search() !== this.value) {
+											that.search(this.value, 'regex').draw();
+										}
 									}
 									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 								}, 1000);
