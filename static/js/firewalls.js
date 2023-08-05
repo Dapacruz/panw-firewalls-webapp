@@ -148,7 +148,7 @@ $('#modal-run-cmds-button').on('click', function () {
 
 	let commands = [];
 	input.forEach((val) => {
-		cmd = val.trim()
+		cmd = val.trim();
 		if (!cmd) {
 			return;
 		}
@@ -175,7 +175,15 @@ function selectText(containerid) {
 	}
 }
 
-function upgradeDynamicContent() {
+function getDeviceState(jobID) {
+	let extra_vars = {
+		save_config_snapshot: "Yes",
+		smtp_to: `${username.slice(2)}@${env.domain}`
+	};
+	executeAnsiblePlaybook(jobID, extra_vars);
+}
+
+function executeAnsiblePlaybook(jobID, extraVars = {}) {
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
 
@@ -186,7 +194,11 @@ function upgradeDynamicContent() {
 
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
-		var hostname = $.parseHTML(row.hostname)[0].innerText;
+		var hostname = $.parseHTML(row.hostname)[0].innerText.replace(`.${env.domain}`, "");
+		// Skip externally managed firewalls
+		if (env.externallyManagedFirewalls.includes(hostname)) {
+			return true;
+		}
 		hostnames.push(hostname);
 	});
 
@@ -197,13 +209,18 @@ function upgradeDynamicContent() {
 
 	$('#loading-progressbar').attr('style', 'display: block;');
 
+	extraVars = {
+		limit: hostnames.join(','),
+		extra_vars: extraVars
+	};
 	$.ajax({
-		url: `https://${env.ansible_tower}/api/v2/job_templates/50/launch/`,
+		url: `https://${env.ansible_tower}/api/v2/job_templates/${jobID}/launch/`,
+		crossDomain: true,
 		type: 'POST',
 		headers: {
-		  "Authorization": "Basic " + btoa(`${username}:${password}`)
+			"Authorization": "Basic " + btoa(`${username}:${password}`)
 		},
-		data: `{ "limit": "${hostnames.join(',')}" }`,
+		data: JSON.stringify(extraVars),
 		contentType: 'application/json',
 		dataType: 'json',
 		success: async (response) => {
@@ -267,7 +284,7 @@ function getAnsibleJobStatus(jobId) {
 		success: function (response) {
 			jobStatus = response.results[0].summary_fields.job[0].status;
 		},
-		error: function (xhr, status, error) {}
+		error: function (xhr, status, error) { }
 	});
 
 	return jobStatus;
@@ -276,17 +293,17 @@ function getAnsibleJobStatus(jobId) {
 function fetchAnsibleJobReport(jobId) {
 	var jobReport;
 	$.ajax({
-		url: `https://${env.ansible_tower}/api/v2/jobs/${jobId}/stdout?format=txt_download`,
+		url: `https://${env.ansible_tower}/api/v2/jobs/${jobId}/stdout/?format=txt_download`,
 		type: 'GET',
 		headers: {
-		  "Authorization": "Basic " + btoa(`${username}:${password}`)
+			"Authorization": "Basic " + btoa(`${username}:${password}`)
 		},
 		dataType: 'text',
 		async: false,
 		success: function (response) {
 			jobReport = response;
 		},
-		error: function (xhr, status, error) {}
+		error: function (xhr, status, error) { }
 	});
 
 	return jobReport;
@@ -294,9 +311,9 @@ function fetchAnsibleJobReport(jobId) {
 
 function sleep(n) {
 	return new Promise(done => {
-	  setTimeout(() => {
-		done();
-	  }, n);
+		setTimeout(() => {
+			done();
+		}, n);
 	});
 }
 
@@ -509,6 +526,7 @@ function login() {
 
 	$('#auth-event').text('Authenticating ...');
 	$.ajax({
+		// Pointing to a version 9.1 firewall, as there are CORS issues with 10.x
 		url: `https://${env.firewall}/api/?`,
 		type: 'POST',
 		crossDomain: true,
@@ -649,13 +667,13 @@ function getFirewalls() {
 
 						var haState = $(this).children('ha').children('state').text() || 'standalone';
 						if (haState === 'active') {
-							ha_led = "static/img/green_led.png"
+							ha_led = "static/img/green_led.png";
 						} else if (haState === 'passive') {
-							ha_led = "static/img/yellow_led.png"
+							ha_led = "static/img/yellow_led.png";
 						} else if (haState !== 'standalone') {
-							ha_led = "static/img/red_led.png"
+							ha_led = "static/img/red_led.png";
 						} else {
-							ha_led = "static/img/gray_led.png"
+							ha_led = "static/img/gray_led.png";
 						}
 
 						haState = `<img src="${ha_led}" alt="${haState}" style="padding-right: .2em; vertical-align: middle;"><span style="vertical-align: middle;">${haState.charAt(0).toUpperCase()}${haState.slice(1)}</span>`;
@@ -671,7 +689,7 @@ function getFirewalls() {
 
 						if (hostname) {
 							hostname = `${hostname.toLowerCase()}.${env.domain}`;
-							hostname = `<a target="_blank" href="https://${hostname}">${hostname}</a>`
+							hostname = `<a target="_blank" href="https://${hostname}">${hostname}</a>`;
 
 							tableData.push({
 								hostname: hostname,
@@ -877,7 +895,8 @@ function getFirewalls() {
 									<br>
 									<ul>
 									<li><h3>Ansible Playbooks</h3></li>
-									<li><a onclick="upgradeDynamicContent()">Upgrade Dynamic Content</a></li>
+									<li><a onclick="executeAnsiblePlaybook('39')">Upgrade Dynamic Content</a></li>
+									<li><a onclick="getDeviceState('47')">Get Device State Snapshot</a></li>
 									</ul>
 									</div>
 								</div>
