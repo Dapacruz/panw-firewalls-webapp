@@ -177,7 +177,7 @@ function selectText(containerid) {
 
 function getDeviceState(jobID) {
 	let extra_vars = {
-		save_config_snapshot: "No",
+		save_config_snapshot: "Yes",
 		smtp_to: `${username.slice(2)}@${env.domain}`
 	};
 	executeAnsiblePlaybook(jobID, extra_vars);
