@@ -175,9 +175,9 @@ function selectText(containerid) {
 	}
 }
 
-function getDeviceState(jobID) {
+function getDeviceState(jobID, saveConfigSnapshot) {
 	let extra_vars = {
-		save_config_snapshot: "Yes",
+		save_config_snapshot: saveConfigSnapshot,
 		smtp_to: `${username.slice(2)}@${env.domain}`
 	};
 	executeAnsiblePlaybook(jobID, extra_vars);
@@ -944,7 +944,8 @@ function getFirewalls() {
 									<ul>
 									<li><h3>Ansible Playbooks</h3></li>
 									<li><a onclick="executeAnsiblePlaybook('39')">Upgrade Dynamic Content</a></li>
-									<li><a onclick="getDeviceState('47')">Get Device State Snapshot</a></li>
+									<li><a onclick="getDeviceState('47', 'No')">Get Device State Snapshot</a></li>
+									<li><a onclick="getDeviceState('47', 'Yes')">Get Device State Backshot</a></li>
 									</ul>
 									</div>
 								</div>
