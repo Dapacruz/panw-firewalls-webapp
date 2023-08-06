@@ -108,12 +108,32 @@
             <div class="modal-config-local-admins__header ui-widget-header"><span
                     class="modal-config-local-admins__close">&times;</span>
             </div>
-            <label for="modal-config-local-admins__input" class="modal-config-local-admins__label">
+            <label for="modal-config-local-admins__label" class="modal-config-local-admins__label">
                 New local admin password:
             </label>
-            <input type="password" class="modal-config-local-admins__input"></input type="password">
+            <input type="password" class="modal-config-local-admins__input"></input>
             <button id="modal-config-local-admins-button"
                 class="button modal-config-local-admins__button ui-button">Execute</button>
+        </div>
+    </div>
+
+    <!-- Get Device State Snapshot Modal -->
+    <div class="modal-get-device-state-snapshot__bg">
+        <div class="modal-get-device-state-snapshot__contents">
+            <div class="modal-get-device-state-snapshot__header ui-widget-header"><span
+                    class="modal-get-device-state-snapshot__close">&times;</span>
+            </div>
+            <p class="modal-get-device-state-snapshot__question">Save configuration snapshot and export device state?
+            </p>
+            <input type="radio" id="modal-get-device-state-snapshot__no" class="modal-get-device-state-snapshot__input"
+                name="save_config" value="No" checked="checked">
+            <label for="modal-get-device-state-snapshot__no"
+                class="modal-get-device-state-snapshot__label">No</label><br>
+            <input type="radio" id="modal-get-device-state-snapshot__yes" class="modal-get-device-state-snapshot__input"
+                name="save_config" value="Yes">
+            <label for="modal-get-device-state-snapshot__yes" class="modal-get-device-state-snapshot__label">Yes</label>
+            <button id="modal-get-device-state-snapshot-button"
+                class="button modal-get-device-state-snapshot__button ui-button">Execute</button>
         </div>
     </div>
 
