@@ -162,6 +162,20 @@ $('#modal-run-cmds-button').on('click', function () {
 	runCommands(commands);
 });
 
+$('.modal-config-local-admins__close').on('click', function () {
+	$('.modal-config-local-admins__bg').attr('style', 'display: none;');
+	$('.modal-config-local-admins__input').val('');
+});
+
+$('#modal-config-local-admins-button').on('click', function () {
+	let password = $('.modal-config-local-admins__input').val();
+
+	$('.modal-config-local-admins__bg').attr('style', 'display: none;');
+	$('.modal-config-local-admins__input').val('');
+
+	configureLocalAdmins('43', password);
+});
+
 function selectText(containerid) {
 	// Limit ctrl/cmd+a selection to results overlay
 	if (document.selection) {
@@ -175,6 +189,13 @@ function selectText(containerid) {
 	}
 }
 
+function configureLocalAdmins(jobID, password) {
+	let extra_vars = {
+		password: password
+	};
+	executeAnsiblePlaybook(jobID, extra_vars);
+}
+
 function getDeviceState(jobID, saveConfigSnapshot) {
 	let extra_vars = {
 		save_config_snapshot: saveConfigSnapshot,
@@ -185,7 +206,7 @@ function getDeviceState(jobID, saveConfigSnapshot) {
 
 function executeAnsiblePlaybook(jobID, extraVars = {}) {
 	var checkbox = $('.toggler');
-	checkbox.prop('checked', !checkbox.prop('checked'));
+	checkbox.prop('checked', false);
 
 	if (!apiKey) {
 		window.alert('You need to log in to execute this action');
@@ -944,6 +965,7 @@ function getFirewalls() {
 									<ul>
 									<li><h3>Ansible Playbooks</h3></li>
 									<li><a onclick="executeAnsiblePlaybook('39')">Upgrade Dynamic Content</a></li>
+									<li><a id="menu-config-local-admins">Configure Local Admins</a></li>
 									<li><a onclick="getDeviceState('47', 'No')">Get Device State Snapshot</a></li>
 									<li><a onclick="getDeviceState('47', 'Yes')">Get Device State Backshot</a></li>
 									</ul>
@@ -976,6 +998,30 @@ function getFirewalls() {
 
 							$('.modal-run-cmds__bg').attr('style', 'display: flex;');
 							$('.modal-run-cmds__input').focus();
+						});
+
+						$('#menu-config-local-admins').on('click', function () {
+							var checkbox = $('.toggler');
+							checkbox.prop('checked', !checkbox.prop('checked'));
+
+							if (!apiKey) {
+								window.alert('You need to log in to execute this action');
+								return;
+							}
+
+							var hostnames = [];
+							table.rows({ selected: true }).data().each((row) => {
+								var hostname = $.parseHTML(row.hostname)[0].innerText;
+								hostnames.push(hostname);
+							});
+
+							if (hostnames.length == 0) {
+								window.alert('Please select the firewalls this action should be applied to');
+								return;
+							}
+
+							$('.modal-config-local-admins__bg').attr('style', 'display: flex;');
+							$('.modal-config-local-admins__input').focus();
 						});
 					}
 
