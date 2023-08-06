@@ -232,7 +232,7 @@ function executeAnsiblePlaybook(jobID, extraVars = {}) {
 		var hostname = $.parseHTML(row.hostname)[0].innerText.replace(`.${env.domain}`, "");
 		// Skip externally managed firewalls
 		if (env.externallyManagedFirewalls.includes(hostname)) {
-			return true;
+			return;
 		}
 		hostnames.push(hostname);
 	});
@@ -738,7 +738,7 @@ function getFirewalls() {
 
 						// Skip firewalls that have not been staged
 						if (tags.length === 0 || tags.includes('Staging')) {
-							return true;
+							return;
 						}
 
 						var haState = $(this).children('ha').children('state').text() || 'standalone';
