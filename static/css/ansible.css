@@ -1,0 +1,15 @@
+.ansible-ok {
+    color: #00b700;
+}
+
+.ansible-changed {
+    color: #cccc00;
+}
+
+.ansible-skipped {
+    color: #0000ff;
+}
+
+.ansible-fatal {
+    color: #ff0000;
+}

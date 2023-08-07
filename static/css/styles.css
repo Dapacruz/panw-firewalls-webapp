@@ -1,3 +1,9 @@
+@import url("hamburger-menu.css");
+@import url("ansible.css");
+@import url("ansible-get-device-state-snapshot.css");
+@import url("ansible-run-commands.css");
+@import url("ansible-configure-local-admins.css");
+
 * {
 	font-family: "Lato", sans-serif;
 	margin: 0;
@@ -102,56 +108,6 @@ a:hover {
 	padding-left: 20px;
 }
 
-
-/* The Modal (background) */
-.modal {
-	display: none;
-	position: fixed;
-	z-index: 1;
-	padding-top: 100px;
-	padding-bottom: 10px;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	overflow-wrap: normal;
-	background-color: rgba(0, 0, 0, 0.4);
-}
-
-.modal-content {
-	margin: auto;
-	padding: 0;
-	padding-bottom: 1em;
-	border: 1px solid #888;
-	height: 100%;
-	width: 95%;
-	overflow-y: hidden;
-	background-color: #fefefe;
-	text-align: center;
-}
-
-.modal-content #header {
-	top: 0;
-	padding-right: 10px;
-	padding-left: 5px;
-	position: sticky;
-	background-color: #fefefe;
-	border-bottom: 1px solid rgba(170, 170, 170, 0.6);
-}
-
-.modal-content #results {
-	font-family: "Roboto Mono", monospace;
-	height: 97%;
-	width: 100%;
-	margin: auto;
-	padding: 5em 10em 0 10em;
-	white-space: pre;
-	overflow-y: scroll;
-	overflow-wrap: break-word;
-	tab-size: 2.5em;
-	text-align: left;
-}
-
 #results-filter {
 	display: inline-block;
 	vertical-align: bottom;
@@ -171,221 +127,6 @@ a:hover {
 	-webkit-appearance: none;
 	padding-left: 5px;
 	height: 28.233330px;
-}
-
-
-/* Run Commands */
-.modal-run-cmds__bg {
-	display: none;
-	background-color: rgba(0, 0, 0, 0.8);
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	top: 0;
-	justify-content: center;
-	align-items: center;
-	z-index: 9999;
-}
-
-.modal-run-cmds__contents {
-	position: relative;
-	height: 400px;
-	width: 600px;
-	background-color: white;
-	text-align: left;
-	border-radius: 4px;
-}
-
-.modal-run-cmds__header {
-	margin-bottom: 30px;
-	padding-right: 10px;
-	padding-bottom: 5px;
-	background-color: #ddd;
-	text-align: right;
-	font-size: 35px;
-	color: #333;
-	border-bottom: 1px solid black;
-}
-
-.modal-run-cmds__close {
-	cursor: pointer;
-	color: white;
-}
-
-.modal-run-cmds__close:hover {
-	color: #999;
-}
-
-.modal-run-cmds__label {
-	margin-left: 30px;
-	font-size: 1rem;
-}
-
-.modal-run-cmds__input {
-	margin: 20px auto;
-	display: block;
-	width: 90%;
-	height: 200px;
-	padding: 8px;
-	border: 1px solid gray;
-	resize: none;
-	font-size: 1rem;
-}
-
-.modal-run-cmds__button {
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	margin: 0 15px 15px 0;
-}
-
-
-/* Configure Local Admins */
-.modal-config-local-admins__bg {
-	display: none;
-	background-color: rgba(0, 0, 0, 0.8);
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	top: 0;
-	justify-content: center;
-	align-items: center;
-	z-index: 9999;
-}
-
-.modal-config-local-admins__contents {
-	position: relative;
-	width: 375px;
-	height: 225px;
-	background-color: white;
-	text-align: left;
-	border-radius: 4px;
-}
-
-.modal-config-local-admins__header {
-	margin-bottom: 30px;
-	padding-right: 10px;
-	padding-bottom: 5px;
-	background-color: #ddd;
-	text-align: right;
-	font-size: 35px;
-	color: #333;
-	border-bottom: 1px solid black;
-}
-
-.modal-config-local-admins__close {
-	cursor: pointer;
-	color: white;
-}
-
-.modal-config-local-admins__close:hover {
-	color: #999;
-}
-
-.modal-config-local-admins__label {
-	margin-left: 30px;
-	font-size: 1rem;
-}
-
-.modal-config-local-admins__input {
-	margin: 20px auto;
-	margin-left: 30px;
-	display: grid;
-	float: left;
-	width: 85%;
-	padding: 8px;
-	border: 1px solid gray;
-	resize: none;
-	font-size: 1rem;
-}
-
-.modal-config-local-admins__button {
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	margin: 0 15px 15px 0;
-}
-
-
-/* Get Device State Snapshot */
-.modal-get-device-state-snapshot__bg {
-	display: none;
-	background-color: rgba(0, 0, 0, 0.8);
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	top: 0;
-	justify-content: center;
-	align-items: center;
-	z-index: 9999;
-}
-
-.modal-get-device-state-snapshot__contents {
-	position: relative;
-	width: 430px;
-	height: 200px;
-	background-color: white;
-	text-align: left;
-	border-radius: 4px;
-}
-
-.modal-get-device-state-snapshot__header {
-	margin-bottom: 30px;
-	padding-right: 10px;
-	padding-bottom: 5px;
-	background-color: #ddd;
-	text-align: right;
-	font-size: 35px;
-	color: #333;
-	border-bottom: 1px solid black;
-}
-
-.modal-get-device-state-snapshot__close {
-	cursor: pointer;
-	color: white;
-}
-
-.modal-get-device-state-snapshot__close:hover {
-	color: #999;
-}
-
-.modal-get-device-state-snapshot__label {
-	margin-left: 30px;
-	font-size: 1rem;
-}
-
-.modal-get-device-state-snapshot__question {
-	margin: auto auto 10px auto;
-	margin-left: 30px;
-	font-size: 1rem;
-}
-
-.modal-get-device-state-snapshot__input {
-	margin-left: 60px;
-	font-size: 1rem;
-}
-
-.modal-get-device-state-snapshot__button {
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	margin: 0 15px 15px 0;
-}
-
-
-/* The Close Button */
-.close {
-	color: #aaaaaa;
-	float: right;
-	font-size: 28px;
-	font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-	color: #000;
-	text-decoration: none;
-	cursor: pointer;
 }
 
 #loading-progressbar {
@@ -470,18 +211,66 @@ td.haOther {
 	float: right !important;
 }
 
-.ansible-ok {
-	color: #00b700;
+/* The Close Button */
+.close {
+	color: #aaaaaa;
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
 }
 
-.ansible-changed {
-	color: #cccc00;
+.close:hover,
+.close:focus {
+	color: #000;
+	text-decoration: none;
+	cursor: pointer;
 }
 
-.ansible-skipped {
-	color: #0000ff;
+/* The Modal (background) */
+.modal {
+	display: none;
+	position: fixed;
+	z-index: 1;
+	padding-top: 100px;
+	padding-bottom: 10px;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow-wrap: normal;
+	background-color: rgba(0, 0, 0, 0.4);
 }
 
-.ansible-fatal {
-	color: #ff0000;
+.modal-content {
+	margin: auto;
+	padding: 0;
+	padding-bottom: 1em;
+	border: 1px solid #888;
+	height: 100%;
+	width: 95%;
+	overflow-y: hidden;
+	background-color: #fefefe;
+	text-align: center;
+}
+
+.modal-content #header {
+	top: 0;
+	padding-right: 10px;
+	padding-left: 5px;
+	position: sticky;
+	background-color: #fefefe;
+	border-bottom: 1px solid rgba(170, 170, 170, 0.6);
+}
+
+.modal-content #results {
+	font-family: "Roboto Mono", monospace;
+	height: 97%;
+	width: 100%;
+	margin: auto;
+	padding: 5em 10em 0 10em;
+	white-space: pre;
+	overflow-y: scroll;
+	overflow-wrap: break-word;
+	tab-size: 2.5em;
+	text-align: left;
 }
