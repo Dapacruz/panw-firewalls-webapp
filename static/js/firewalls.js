@@ -185,7 +185,8 @@ $('#modal-get-device-state-snapshot-button').on('click', function () {
 	let saveConfig = $('input[name="save_config"]:checked').val();
 
 	$('.modal-get-device-state-snapshot__bg').attr('style', 'display: none;');
-	$('.modal-get-device-state-snapshot__input').val('');
+	$('#modal-get-device-state-snapshot__yes').prop('checked', false);
+	$('#modal-get-device-state-snapshot__no').prop('checked', true);
 
 	getDeviceState('47', saveConfig);
 });
@@ -635,6 +636,8 @@ function login() {
 function logout() {
 	if (apiKey) {
 		apiKey = null;
+		username = null;
+		password = null;
 		clearTimeout(loginTimeout);
 		$('#password').val('');
 		$('#login').html('Login').unbind('click').click(() => {
