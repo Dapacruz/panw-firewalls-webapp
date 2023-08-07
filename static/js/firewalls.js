@@ -83,7 +83,7 @@ $('#results-filter input').on('keyup change', function () {
 		if ($('#results').attr('data-text-type') == 'xml') {
 			// Remove tag start and end characters
 			filter = filter.replace(/(<|>|\/)/g, '');
-			var startTag = new RegExp(`<${filter}[^/]*?>`, 'i');
+			var startTag = new RegExp(`(<${filter}[^/]*?>)`, 'i');
 			var endTag;
 			var showTagChildren = false;
 
@@ -102,7 +102,7 @@ $('#results-filter input').on('keyup change', function () {
 					$(this)
 						.text()
 						.search(
-							new RegExp(`${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`)
+							new RegExp(`(${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>)`)
 						) < 0
 				) {
 					// Filter matches and closing tag not on the same line
@@ -116,7 +116,7 @@ $('#results-filter input').on('keyup change', function () {
 				}
 			});
 		} else {
-			var re = new RegExp(filter, 'i');
+			var re = new RegExp(`(${filter})`, 'i');
 			$('#results-body div').contents().each(function () {
 				// If the list item does not contain the text hide it
 				if ($(this).text().search(re) < 0) {
@@ -937,13 +937,13 @@ function getFirewalls() {
 									}
 
 									if (this.value.startsWith('!')) {
-										value = `^((?!${this.value.replace('!', '')}).)*$`;
+										value = `^(((?!${this.value.replace('!', '')}).)*)$`;
 										if (that.search() !== value) {
 											that.search(value, 'regex').draw();
 										}
 									} else {
 										if (that.search() !== this.value) {
-											that.search(this.value, 'regex').draw();
+											that.search(`(${this.value})`, 'regex').draw();
 										}
 									}
 									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
