@@ -736,7 +736,7 @@ function getFirewalls() {
 						var swVersion = $(this).children('sw-version').text();
 						var tags = Array.from(firewallTags[serial]).sort().join(', <br>');
 
-						// Skip firewalls that have not been staged
+						// Skip firewalls that have not been fully staged
 						if (tags.length === 0 || tags.includes('Staging')) {
 							return;
 						}
@@ -848,7 +848,7 @@ function getFirewalls() {
 							createdRow: (row, data, dataIndex, cells) => {
 								if (data['connected'] === 'No') {
 									$(cells).addClass('notConnected');
-									$(cells[5]).css('font-weight', '600').css('color', 'red');
+									$(cells[3]).css('font-weight', '600').css('color', 'red');
 								}
 							},
 							buttons: [
