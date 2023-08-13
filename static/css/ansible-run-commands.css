@@ -26,7 +26,7 @@
     padding-bottom: 5px;
     background-color: #ddd;
     text-align: right;
-    font-size: 35px;
+    font-size: 1.5rem;
     color: #333;
     border-bottom: 1px solid black;
 }
@@ -42,7 +42,7 @@
 
 .modal-run-cmds__label {
     margin-left: 30px;
-    font-size: 1rem;
+    font-size: 1rem !important;
 }
 
 .modal-run-cmds__input {
@@ -53,7 +53,7 @@
     padding: 8px;
     border: 1px solid gray;
     resize: none;
-    font-size: 1rem;
+    font-size: 1rem !important;
 }
 
 .modal-run-cmds__button {
@@ -61,4 +61,17 @@
     right: 0;
     bottom: 0;
     margin: 0 15px 15px 0;
+    font-size: 1rem !important;
+}
+
+.modal-run-cmds__hostname {
+    color: #00b700;
+}
+
+.modal-run-cmds__command {
+    color: #cccc00;
+}
+
+.modal-run-cmds__separator {
+    color: #0000ff;
 }

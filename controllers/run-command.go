@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"os/exec"
-	"fmt"
 	"bytes"
+	"fmt"
 	"log"
+	"os/exec"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -15,26 +15,26 @@ type RunCommand struct {
 }
 
 type RunCommandRequest struct {
-	Username string `form:"username"`
-	Password string `form:"password"`
-	Commands string `form:"commands"`
+	Username  string `form:"username"`
+	Password  string `form:"password"`
+	Commands  string `form:"commands"`
 	Firewalls string `form:"firewalls"`
 }
 
 func (c *RunCommand) Post() {
 	request := RunCommandRequest{}
-    if err := c.ParseForm(&request); err != nil {
+	if err := c.ParseForm(&request); err != nil {
 		fmt.Println(err)
 	}
 
-	cmds := strings.Split(request.Commands, ",")
-	args := []string{"--user", request.Username, "--password", request.Password}
-	args = append(args, cmds...)
-	args = append(args, request.Firewalls)
+	firewalls := strings.Split(request.Firewalls, ",")
+	args := []string{"firewall", "run", "commands", "-K", "--user", request.Username, "--password", request.Password, "--command"}
+	args = append(args, request.Commands)
+	args = append(args, firewalls...)
 
 	// fmt.Printf("Password: %v\n", request.Password)
 
-	cmd := exec.Command("static/py/run-panw-cmd.py", args...)
+	cmd := exec.Command("static/go/panos-cli", args...)
 	var outb, errb bytes.Buffer
 	cmd.Stdout = &outb
 	cmd.Stderr = &errb
@@ -44,6 +44,6 @@ func (c *RunCommand) Post() {
 	}
 
 	fmt.Println("out:", outb.String(), "err:", errb.String())
-	
+
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }
