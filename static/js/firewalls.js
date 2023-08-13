@@ -7,8 +7,10 @@ var tableData = [];
 var tableInitialized = false;
 var username;
 var password;
-var apiKey;
-var loginTimeout;
+var panosToken;
+var aapToken;
+var authTimeout;
+const inactivityTimeout = 15 * 60 * 1000;	// 15 minutes
 var env = (function () {
 	var json = null;
 	$.ajax({
@@ -25,19 +27,8 @@ var env = (function () {
 
 getFirewalls();
 
-$('#login').click(() => {
-	login();
-});
-
-$('#username, #password').on('keyup', function (event) {
-	if (event.keyCode == 13) {
-		event.preventDefault();
-		$('#login').click();
-	}
-});
-
 // When the user clicks on <span> (x), close the modal
-$('span.close').click(() => {
+$('span.close').click(function () {
 	$('body').toggleClass('noscroll');
 	$('#results-overlay').attr('style', 'display: none;');
 	$('#results').removeAttr('style');
@@ -45,7 +36,7 @@ $('span.close').click(() => {
 });
 
 // When the user clicks anywhere outside of the modal, close it
-$(window).click((event) => {
+$(window).click(function (event) {
 	if (event.target == $('#results-overlay')[0]) {
 		$('body').toggleClass('noscroll');
 		$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
@@ -57,24 +48,24 @@ $(window).click((event) => {
 });
 
 // Limit ctrl/cmd+a selection to results overlay
-$('.modal-content').keydown(function (e) {
-	if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
-		e.preventDefault();
+$('.modal-content').keydown(function (event) {
+	if ((event.ctrlKey || event.metaKey) && event.keyCode == 65) {
+		event.preventDefault();
 		selectText('results');
 	}
 });
 
 // Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
-$(document).keydown(function (e) {
+$(document).keydown(function (event) {
 	if ($('.modal-content:hover').length != 0) {
-		if ((e.ctrlKey || e.metaKey) && e.keyCode == 65) {
-			e.preventDefault();
+		if ((event.ctrlKey || event.metaKey) && event.keyCode == 65) {
+			event.preventDefault();
 			selectText('results');
 		}
 	}
 });
 
-$('#results-filter input').on('keyup change', function () {
+$('#results-filter input').on('keyup change click', function () {
 	// Pause for a few more characters
 	setTimeout(() => {
 		// Retrieve the input field text
@@ -119,7 +110,10 @@ $('#results-filter input').on('keyup change', function () {
 			var re = new RegExp(`(${filter})`, 'i');
 			$('#results-body div').contents().each(function () {
 				// If the list item does not contain the text hide it
-				if ($(this).text().search(re) < 0) {
+				if ($(this).text().startsWith('*** ') || $(this).text().startsWith('#')) {
+					// Always display run command headers
+					$(this).parent().css('display', '');
+				} else if ($(this).text().search(re) < 0) {
 					$(this).parent().css('display', 'none');
 				} else {
 					// Show the list item if the phrase matches
@@ -127,7 +121,7 @@ $('#results-filter input').on('keyup change', function () {
 				}
 			});
 		}
-	}, 500);
+	}, 1000);
 });
 
 $('#results-filter button').on('click clear', function () {
@@ -143,16 +137,15 @@ $('.modal-run-cmds__close').on('click', function () {
 	$('.modal-run-cmds__input').val('');
 });
 
-$('#modal-run-cmds-button').on('click', function () {
+$('#modal-run-cmds-button').on('click', async function () {
 	let input = $('.modal-run-cmds__input').val().split('\n');
 
 	let commands = [];
-	input.forEach((val) => {
+	input.forEach(function (val) {
 		cmd = val.trim();
 		if (!cmd) {
 			return;
 		}
-		commands.push("--command");
 		commands.push(cmd);
 	});
 
@@ -191,6 +184,23 @@ $('#modal-get-device-state-snapshot-button').on('click', function () {
 	getDeviceState('47', saveConfig);
 });
 
+$('#username, #password').on('keyup', function (event) {
+	if (event.keyCode == 13) {
+		event.preventDefault();
+		$('#login').click();
+	}
+});
+
+$('.modal-credentials__close').on('click', function () {
+	$('.modal-credentials__bg').attr('style', 'display: none;');
+	$('#username').val('');
+	$('#password').val('');
+});
+
+$('#modal-credentials-button').on('click', function () {
+	login();
+});
+
 function selectText(containerid) {
 	// Limit ctrl/cmd+a selection to results overlay
 	if (document.selection) {
@@ -219,14 +229,9 @@ function getDeviceState(jobID, saveConfig) {
 	executeAnsiblePlaybook(jobID, extra_vars);
 }
 
-function executeAnsiblePlaybook(jobID, extraVars = {}) {
+async function executeAnsiblePlaybook(jobID, extraVars = {}) {
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', false);
-
-	if (!apiKey) {
-		window.alert('You need to log in to execute this action');
-		return;
-	}
 
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
@@ -243,6 +248,12 @@ function executeAnsiblePlaybook(jobID, extraVars = {}) {
 		return;
 	}
 
+	if (!aapToken) {
+		await login();
+	} else {
+		resetInactivityTimeout();
+	}
+
 	$('#loading-progressbar').attr('style', 'display: block;');
 
 	extraVars = {
@@ -254,7 +265,7 @@ function executeAnsiblePlaybook(jobID, extraVars = {}) {
 		crossDomain: true,
 		type: 'POST',
 		headers: {
-			"Authorization": "Basic " + btoa(`${username}:${password}`)
+			"Authorization": "Basic " + aapToken
 		},
 		data: JSON.stringify(extraVars),
 		contentType: 'application/json',
@@ -345,11 +356,13 @@ function executeAnsiblePlaybook(jobID, extraVars = {}) {
 function getAnsibleJobStatus(jobId) {
 	var jobStatus;
 
+	resetInactivityTimeout();
+
 	$.ajax({
 		url: `https://${env.ansible_tower}/api/v2/jobs/${jobId}/activity_stream/`,
 		type: 'GET',
 		headers: {
-			"Authorization": "Basic " + btoa(`${username}:${password}`)
+			"Authorization": "Basic " + aapToken
 		},
 		dataType: 'json',
 		async: false,
@@ -364,11 +377,14 @@ function getAnsibleJobStatus(jobId) {
 
 function fetchAnsibleJobReport(jobId) {
 	var jobReport;
+
+	resetInactivityTimeout();
+
 	$.ajax({
 		url: `https://${env.ansible_tower}/api/v2/jobs/${jobId}/stdout/?format=txt_download`,
 		type: 'GET',
 		headers: {
-			"Authorization": "Basic " + btoa(`${username}:${password}`)
+			"Authorization": "Basic " + aapToken
 		},
 		dataType: 'text',
 		async: false,
@@ -389,14 +405,9 @@ function sleep(n) {
 	});
 }
 
-function getInterfaces() {
+async function getInterfaces() {
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
-
-	if (!apiKey) {
-		window.alert('You need to log in to execute this action');
-		return;
-	}
 
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
@@ -409,12 +420,18 @@ function getInterfaces() {
 		return;
 	}
 
+	if (!panosToken) {
+		await login();
+	} else {
+		resetInactivityTimeout();
+	}
+
 	$('#loading-progressbar').attr('style', 'display: block;');
 
 	$.ajax({
 		url: '/get/interfaces',
 		type: 'POST',
-		data: `key=${apiKey}&firewalls=${hostnames.join(' ')}`,
+		data: `key=${panosToken}&firewalls=${hostnames.join(' ')}`,
 		dataType: 'text',
 		success: function (response) {
 			$('#results-filter input').attr('placeholder', 'Filter');
@@ -452,7 +469,7 @@ function getInterfaces() {
 	});
 }
 
-function runCommands(commands) {
+async function runCommands(commands) {
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
 		var hostname = $.parseHTML(row.hostname)[0].innerText;
@@ -463,12 +480,16 @@ function runCommands(commands) {
 		return;
 	}
 
+	if (!password) {
+		await getCredentials();
+	}
+
 	$('#loading-progressbar').attr('style', 'display: block;');
 
 	$.ajax({
 		url: '/run/command',
 		type: 'POST',
-		data: `username=${username}&password=${encodeURIComponent(password)}&commands=${commands.join(',')}&firewalls=${hostnames.join(' ')}`,
+		data: `username=${username}&password=${password}&commands=${commands.join(',')}&firewalls=${hostnames.join(',')}`,
 		dataType: 'text',
 		success: function (response) {
 			$('#results-filter input').attr('placeholder', 'Filter');
@@ -478,10 +499,12 @@ function runCommands(commands) {
 			response.split('\n').forEach(function (val) {
 				if (val == '') {
 					modifiedResponse.push(`<br>`);
-				} else if (val.indexOf('=== ') == 0) {
-					modifiedResponse.push(`<br>${val}<br>`);
-				} else if (val.indexOf('=') == 0) {
-					modifiedResponse.push(`${val}<br>`);
+				} else if (val.includes(env.domain)) {
+					modifiedResponse.push(`<div class='modal-run-cmds__hostname'>${val}</div>`);
+				} else if (val.startsWith('*** ')) {
+					modifiedResponse.push(`<div class='modal-run-cmds__command'>${val}</div>`);
+				} else if (val.startsWith('#')) {
+					modifiedResponse.push(`<div class='modal-run-cmds__separator'>${val}</div>`);
 				} else {
 					modifiedResponse.push(`<div>${val}</div>`);
 				}
@@ -505,16 +528,13 @@ function runCommands(commands) {
 			window.alert(`Something went seriously wrong (${error}).`);
 		}
 	});
+
+	password = null;
 }
 
-function getConfig(format) {
+async function getConfig(format) {
 	var checkbox = $('.toggler');
 	checkbox.prop('checked', !checkbox.prop('checked'));
-
-	if (!apiKey) {
-		window.alert('You need to log in to execute this action');
-		return;
-	}
 
 	var hostnames = [];
 	table.rows({ selected: true }).data().each((row) => {
@@ -527,12 +547,20 @@ function getConfig(format) {
 		return;
 	}
 
+	if (format === 'set' && !password) {
+		await getCredentials();
+	} else if (!panosToken) {
+		await login();
+	} else if (panosToken) {
+		resetInactivityTimeout();
+	}
+
 	$('#loading-progressbar').attr('style', 'display: block;');
 
 	$.ajax({
 		url: '/get/config',
 		type: 'POST',
-		data: `format=${format}&username=${username}&password=${encodeURIComponent(password)}&key=${apiKey}&firewalls=${hostnames.join(
+		data: `format=${format}&username=${username}&password=${password}&key=${panosToken}&firewalls=${hostnames.join(
 			' '
 		)}`,
 		dataType: 'text',
@@ -582,6 +610,8 @@ function getConfig(format) {
 			window.alert('Something went seriously wrong');
 		}
 	});
+
+	password = null;
 }
 
 function clearSearch() {
@@ -592,36 +622,51 @@ function clearSearch() {
 	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 }
 
-function login() {
-	username = $('#username').val();
-	password = $('#password').val();
+function getCredentials() {
+	$('.modal-credentials__bg').attr('style', 'display: flex;');
+	if (username) {
+		$('#username').val(username);
+		$('#password').focus();
+	} else {
+		$('#username').focus();
+	}
 
-	$('#auth-event').text('Authenticating ...');
-	$.ajax({
+	// Wait for user input
+	return new Promise(resolve => {
+		function handleClick() {
+			document.getElementById('login').removeEventListener('click', handleClick);
+			document.removeEventListener('keypress', handleEnter);
+			$('.modal-credentials__bg').attr('style', 'display: none;');
+			username = $('#username').val();
+			$('#username').val('');
+			password = encodeURIComponent($('#password').val());
+			$('#password').val('');
+			resolve();
+		}
+		function handleEnter(event) {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				document.getElementById('login').click();
+			}
+		}
+		document.addEventListener('keypress', handleEnter);
+		document.getElementById('login').addEventListener('click', handleClick);
+	});
+}
+
+async function login() {
+	await getCredentials();
+
+	// Get PAN-OS API key
+	await $.ajax({
 		// Pointing to a version 9.1 firewall, as there are CORS issues with 10.x
 		url: `https://${env.firewall}/api/?`,
 		type: 'POST',
 		crossDomain: true,
-		data: `type=keygen&user=${username}&password=${encodeURIComponent(password)}`,
+		data: `type=keygen&user=${username}&password=${password}`,
 		dataType: 'xml',
 		success: function (response) {
-			apiKey = $(response).find('key').text();
-			if (apiKey) {
-				$('#login').html('Logout').unbind('click').click(() => {
-					logout();
-				});
-				$('#username').hide();
-				$('#password').hide();
-				$('#auth-event').text('Authenticated!');
-				setTimeout(() => {
-					$('#auth-event').html('&nbsp');
-				}, 5000);
-			}
-
-			// Logout at midnight due to password changes
-			loginTimeout = setTimeout(function () {
-				logout();
-			}, getMSToMidnight());
+			panosToken = $(response).find('key').text();
 		},
 		error: function (xhr, status, error) {
 			console.log(error);
@@ -631,31 +676,26 @@ function login() {
 			}, 5000);
 		}
 	});
+
+	aapToken = btoa(`${username}:${decodeURIComponent(password)}`);
+
+	// Remove credentials after 15 minutes
+	authTimeout = setTimeout(() => {
+		panosToken = null;
+		aapToken = null;
+	}, inactivityTimeout);
+
+	password = null;
 }
 
-function logout() {
-	if (apiKey) {
-		apiKey = null;
-		username = null;
-		password = null;
-		clearTimeout(loginTimeout);
-		$('#password').val('');
-		$('#login').html('Login').unbind('click').click(() => {
-			login();
-		});
-		$('#username').show();
-		$('#password').show();
-		$('#auth-event').text(`Logged out at ${new Date().toLocaleTimeString()}`);
+function resetInactivityTimeout() {
+	if (authTimeout) {
+		clearTimeout(authTimeout);
+		authTimeout = setTimeout(() => {
+			panosToken = null;
+			password = null;
+		}, inactivityTimeout);
 	}
-}
-
-function getMSToMidnight() {
-	now = new Date();
-	msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 24, 0, 0, 0) - now;
-	if (msToMidnight < 0) {
-		msToMidnight += 86400000;
-	}
-	return msToMidnight;
 }
 
 function getFirewalls() {
@@ -930,7 +970,7 @@ function getFirewalls() {
 								event.stopPropagation();
 							});
 
-							$('input', this.header()).on('keydown change clear', function () {
+							$('input', this.header()).on('keyup change clear click', function () {
 								// Pause for a few more characters
 								setTimeout(() => {
 									if (this.value) {
@@ -964,6 +1004,7 @@ function getFirewalls() {
 							$('#deselect-all-rows').removeClass('hide');
 						});
 
+						// Create hamburger menu
 						$('div.toolbar').html(`
 							<div class="menu-wrap">
 								<input type="checkbox" class="toggler">
@@ -996,11 +1037,6 @@ function getFirewalls() {
 							var checkbox = $('.toggler');
 							checkbox.prop('checked', !checkbox.prop('checked'));
 
-							if (!apiKey) {
-								window.alert('You need to log in to execute this action');
-								return;
-							}
-
 							var hostnames = [];
 							table.rows({ selected: true }).data().each((row) => {
 								var hostname = $.parseHTML(row.hostname)[0].innerText;
@@ -1020,11 +1056,6 @@ function getFirewalls() {
 							var checkbox = $('.toggler');
 							checkbox.prop('checked', !checkbox.prop('checked'));
 
-							if (!apiKey) {
-								window.alert('You need to log in to execute this action');
-								return;
-							}
-
 							var hostnames = [];
 							table.rows({ selected: true }).data().each((row) => {
 								var hostname = $.parseHTML(row.hostname)[0].innerText;
@@ -1043,11 +1074,6 @@ function getFirewalls() {
 						$('#menu-get-device-state-snapshot').on('click', function () {
 							var checkbox = $('.toggler');
 							checkbox.prop('checked', !checkbox.prop('checked'));
-
-							if (!apiKey) {
-								window.alert('You need to log in to execute this action');
-								return;
-							}
 
 							var hostnames = [];
 							table.rows({ selected: true }).data().each((row) => {

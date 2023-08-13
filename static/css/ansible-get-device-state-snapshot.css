@@ -26,7 +26,7 @@
     padding-bottom: 5px;
     background-color: #ddd;
     text-align: right;
-    font-size: 35px;
+    font-size: 1.5rem;
     color: #333;
     border-bottom: 1px solid black;
 }
@@ -48,12 +48,12 @@
 .modal-get-device-state-snapshot__question {
     margin: auto auto 10px auto;
     margin-left: 30px;
-    font-size: 1rem;
+    font-size: 1rem !important;
 }
 
 .modal-get-device-state-snapshot__input {
     margin-left: 60px;
-    font-size: 1rem;
+    font-size: 1rem !important;
 }
 
 .modal-get-device-state-snapshot__button {
@@ -61,4 +61,5 @@
     right: 0;
     bottom: 0;
     margin: 0 15px 15px 0;
+    font-size: 1rem !important;
 }
