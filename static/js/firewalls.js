@@ -25,181 +25,182 @@ var env = (function () {
 	return json;
 })();
 
+updateUi();
 getFirewalls();
 
-// When the user clicks on <span> (x), close the modal
-$('span.close').click(function () {
-	$('body').toggleClass('noscroll');
-	$('#results-overlay').attr('style', 'display: none;');
-	$('#results').removeAttr('style');
-	$('#results-filter input').val('');
-});
-
-// When the user clicks anywhere outside of the modal, close it
-$(window).click(function (event) {
-	if (event.target == $('#results-overlay')[0]) {
+function updateUi() {
+	// When the user clicks on <span> (x), close the modal
+	$('span.close').click(function () {
 		$('body').toggleClass('noscroll');
-		$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
-		$('#results-filter input').val('');
-		$('#results-filter input').attr('placeholder', 'Filter');
+		$('#results-overlay').attr('style', 'display: none;');
 		$('#results').removeAttr('style');
-		$('#results').removeAttr('data-text-type');
-	}
-});
+		$('#results-filter input').val('');
+	});
 
-// Limit ctrl/cmd+a selection to results overlay
-$('.modal-content').keydown(function (event) {
-	if ((event.ctrlKey || event.metaKey) && event.keyCode == 65) {
-		event.preventDefault();
-		selectText('results');
-	}
-});
+	// When the user clicks anywhere outside of the modal, close it
+	$(window).click(function (event) {
+		if (event.target == $('#results-overlay')[0]) {
+			$('body').toggleClass('noscroll');
+			$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
+			$('#results-filter input').val('');
+			$('#results-filter input').attr('placeholder', 'Filter');
+			$('#results').removeAttr('style');
+			$('#results').removeAttr('data-text-type');
+		}
+	});
 
-// Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
-$(document).keydown(function (event) {
-	if ($('.modal-content:hover').length != 0) {
+	// Limit ctrl/cmd+a selection to results overlay
+	$('.modal-content').keydown(function (event) {
 		if ((event.ctrlKey || event.metaKey) && event.keyCode == 65) {
 			event.preventDefault();
 			selectText('results');
 		}
-	}
-});
-
-$('#results-filter input').on('keyup change click', function () {
-	// Pause for a few more characters
-	setTimeout(() => {
-		// Retrieve the input field text
-		var filter = $(this).val();
-
-		if ($('#results').attr('data-text-type') == 'xml') {
-			// Remove tag start and end characters
-			filter = filter.replace(/(<|>|\/)/g, '');
-			var startTag = new RegExp(`(<${filter}[^/]*?>)`, 'i');
-			var endTag;
-			var showTagChildren = false;
-
-			$('#results-body div').contents().each(function () {
-				if (filter == '') {
-					$(this).parent().css('display', '');
-				} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
-					// No closing tag match and showTagChildren is true
-					$(this).parent().css('display', '');
-				} else if ($(this).text().search(endTag) > 0 && showTagChildren) {
-					// Closing tag matches and showTagChildren is true
-					showTagChildren = false;
-					$(this).parent().css('display', '');
-				} else if (
-					$(this).text().search(startTag) > 0 &&
-					$(this)
-						.text()
-						.search(
-							new RegExp(`(${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>)`)
-						) < 0
-				) {
-					// Filter matches and closing tag not on the same line
-					showTagChildren = true;
-					endTag = `${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`;
-					$(this).parent().css('display', '');
-				} else if ($(this).text().search(startTag) > 0) {
-					$(this).parent().css('display', '');
-				} else {
-					$(this).parent().css('display', 'none');
-				}
-			});
-		} else {
-			var re = new RegExp(`(${filter})`, 'i');
-			$('#results-body div').contents().each(function () {
-				// If the list item does not contain the text hide it
-				if ($(this).text().startsWith('*** ') || $(this).text().startsWith('#')) {
-					// Always display run command headers
-					$(this).parent().css('display', '');
-				} else if ($(this).text().search(re) < 0) {
-					$(this).parent().css('display', 'none');
-				} else {
-					// Show the list item if the phrase matches
-					$(this).parent().css('display', '');
-				}
-			});
-		}
-	}, 1000);
-});
-
-$('#results-filter button').on('click clear', function () {
-	$('#results-filter input').val('');
-	$('#results-body div').contents().each(function () {
-		$(this).parent().css('display', '');
-	});
-	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
-});
-
-$('.modal-run-cmds__close').on('click', function () {
-	$('.modal-run-cmds__bg').attr('style', 'display: none;');
-	$('.modal-run-cmds__input').val('');
-});
-
-$('#modal-run-cmds-button').on('click', async function () {
-	let input = $('.modal-run-cmds__input').val().split('\n');
-
-	let commands = [];
-	input.forEach(function (val) {
-		cmd = val.trim();
-		if (!cmd) {
-			return;
-		}
-		commands.push(cmd);
 	});
 
-	$('.modal-run-cmds__bg').attr('style', 'display: none;');
-	$('.modal-run-cmds__input').val('');
+	// Limit ctrl/cmd+a selection to results overlay when mouse is hovering over modal
+	$(document).keydown(function (event) {
+		if ($('.modal-content:hover').length != 0) {
+			if ((event.ctrlKey || event.metaKey) && event.keyCode == 65) {
+				event.preventDefault();
+				selectText('results');
+			}
+		}
+	});
 
-	runCommands(commands);
-});
+	$('#results-filter input').on('keyup change click', function () {
+		// Pause for a few more characters
+		setTimeout(() => {
+			// Retrieve the input field text
+			var filter = $(this).val();
 
-$('.modal-config-local-admins__close').on('click', function () {
-	$('.modal-config-local-admins__bg').attr('style', 'display: none;');
-	$('.modal-config-local-admins__input').val('');
-});
+			if ($('#results').attr('data-text-type') == 'xml') {
+				// Remove tag start and end characters
+				filter = filter.replace(/(<|>|\/)/g, '');
+				var startTag = new RegExp(`(<${filter}[^/]*?>)`, 'i');
+				var endTag;
+				var showTagChildren = false;
 
-$('#modal-config-local-admins-button').on('click', function () {
-	let password = $('.modal-config-local-admins__input').val();
+				$('#results-body div').contents().each(function () {
+					if (filter == '') {
+						$(this).parent().css('display', '');
+					} else if ($(this).text().search(endTag) < 0 && showTagChildren) {
+						// No closing tag match and showTagChildren is true
+						$(this).parent().css('display', '');
+					} else if ($(this).text().search(endTag) > 0 && showTagChildren) {
+						// Closing tag matches and showTagChildren is true
+						showTagChildren = false;
+						$(this).parent().css('display', '');
+					} else if ($(this).text().search(startTag) > 0 &&
+						$(this)
+							.text()
+							.search(
+								new RegExp(`(${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>)`)
+							) < 0) {
+						// Filter matches and closing tag not on the same line
+						showTagChildren = true;
+						endTag = `${$(this).parent().text().match(/<[^ >]+/i)[0].replace(/</i, '</')}>`;
+						$(this).parent().css('display', '');
+					} else if ($(this).text().search(startTag) > 0) {
+						$(this).parent().css('display', '');
+					} else {
+						$(this).parent().css('display', 'none');
+					}
+				});
+			} else {
+				var re = new RegExp(`(${filter})`, 'i');
+				$('#results-body div').contents().each(function () {
+					// If the list item does not contain the text hide it
+					if ($(this).text().startsWith('*** ') || $(this).text().startsWith('#')) {
+						// Always display run command headers
+						$(this).parent().css('display', '');
+					} else if ($(this).text().search(re) < 0) {
+						$(this).parent().css('display', 'none');
+					} else {
+						// Show the list item if the phrase matches
+						$(this).parent().css('display', '');
+					}
+				});
+			}
+		}, 1000);
+	});
 
-	$('.modal-config-local-admins__bg').attr('style', 'display: none;');
-	$('.modal-config-local-admins__input').val('');
+	$('#results-filter button').on('click clear', function () {
+		$('#results-filter input').val('');
+		$('#results-body div').contents().each(function () {
+			$(this).parent().css('display', '');
+		});
+		$('tbody tr.dtrg-start>td:Contains("No group")').remove();
+	});
 
-	configureLocalAdmins('43', password);
-});
+	$('.modal-run-cmds__close').on('click', function () {
+		$('.modal-run-cmds__bg').attr('style', 'display: none;');
+		$('.modal-run-cmds__input').val('');
+	});
 
-$('.modal-get-device-state-snapshot__close').on('click', function () {
-	$('.modal-get-device-state-snapshot__bg').attr('style', 'display: none;');
-	$('.modal-get-device-state-snapshot__input').val('');
-});
+	$('#modal-run-cmds-button').on('click', async function () {
+		let input = $('.modal-run-cmds__input').val().split('\n');
 
-$('#modal-get-device-state-snapshot-button').on('click', function () {
-	let saveConfig = $('input[name="save_config"]:checked').val();
+		let commands = [];
+		input.forEach(function (val) {
+			cmd = val.trim();
+			if (!cmd) {
+				return;
+			}
+			commands.push(cmd);
+		});
 
-	$('.modal-get-device-state-snapshot__bg').attr('style', 'display: none;');
-	$('#modal-get-device-state-snapshot__yes').prop('checked', false);
-	$('#modal-get-device-state-snapshot__no').prop('checked', true);
+		$('.modal-run-cmds__bg').attr('style', 'display: none;');
+		$('.modal-run-cmds__input').val('');
 
-	getDeviceState('47', saveConfig);
-});
+		runCommands(commands);
+	});
 
-$('#username, #password').on('keyup', function (event) {
-	if (event.keyCode == 13) {
-		event.preventDefault();
-		$('#login').click();
-	}
-});
+	$('.modal-config-local-admins__close').on('click', function () {
+		$('.modal-config-local-admins__bg').attr('style', 'display: none;');
+		$('.modal-config-local-admins__input').val('');
+	});
 
-$('.modal-credentials__close').on('click', function () {
-	$('.modal-credentials__bg').attr('style', 'display: none;');
-	$('#username').val('');
-	$('#password').val('');
-});
+	$('#modal-config-local-admins-button').on('click', function () {
+		let password = $('.modal-config-local-admins__input').val();
 
-$('#modal-credentials-button').on('click', function () {
-	login();
-});
+		$('.modal-config-local-admins__bg').attr('style', 'display: none;');
+		$('.modal-config-local-admins__input').val('');
+
+		configureLocalAdmins('43', password);
+	});
+
+	$('.modal-get-device-state-snapshot__close').on('click', function () {
+		$('.modal-get-device-state-snapshot__bg').attr('style', 'display: none;');
+		$('.modal-get-device-state-snapshot__input').val('');
+	});
+
+	$('#modal-get-device-state-snapshot-button').on('click', function () {
+		let saveConfig = $('input[name="save_config"]:checked').val();
+
+		$('.modal-get-device-state-snapshot__bg').attr('style', 'display: none;');
+		$('#modal-get-device-state-snapshot__yes').prop('checked', false);
+		$('#modal-get-device-state-snapshot__no').prop('checked', true);
+
+		getDeviceState('47', saveConfig);
+	});
+
+	$('#username, #password').on('keyup', function (event) {
+		if (event.keyCode == 13) {
+			event.preventDefault();
+			$('#login').click();
+		}
+	});
+
+	$('.modal-credentials__close').on('click', function () {
+		$('.modal-credentials__bg').attr('style', 'display: none;');
+		$('#username').val('');
+		$('#password').val('');
+	});
+
+	$('#modal-credentials-button').on('click', function () {
+		login();
+	});
+}
 
 function selectText(containerid) {
 	// Limit ctrl/cmd+a selection to results overlay
