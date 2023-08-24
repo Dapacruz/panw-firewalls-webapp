@@ -34,7 +34,14 @@ function configureLocalAdmins(jobID, password) {
     executeAnsiblePlaybook(jobID, extra_vars);
 }
 
-function getDeviceState(jobID, saveConfig) {
+async function getDeviceState(jobID, saveConfig) {
+
+    if (!aapToken) {
+        await login();
+    } else {
+        resetInactivityTimeout();
+    }
+
     let extra_vars = {
         save_config_snapshot: saveConfig,
         smtp_to: `${username.slice(2)}@${env.domain}`

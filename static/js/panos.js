@@ -16,7 +16,6 @@ $('#modal-run-cmds-button').on('click', async function () {
     });
 
     $('.modal-run-cmds__bg').attr('style', 'display: none;');
-    $('.modal-run-cmds__input').val('');
 
     runCommands(commands);
 });
