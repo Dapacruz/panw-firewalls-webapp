@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -41,8 +40,8 @@ func (c *GetApiKey) Post() {
 
 	q := req.URL.Query()
 	q.Add("type", "keygen")
-	q.Add("user", base64.StdEncoding.EncodeToString([]byte(request.Username)))
-	q.Add("password", base64.StdEncoding.EncodeToString([]byte(request.Password)))
+	q.Add("user", request.Username)
+	q.Add("password", request.Password)
 
 	req.URL.RawQuery = q.Encode()
 

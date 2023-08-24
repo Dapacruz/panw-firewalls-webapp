@@ -98,11 +98,10 @@ async function login() {
 
 	// Get PAN-OS API key
 	await $.ajax({
-		// Pointing to a version 9.1 firewall, as there are CORS issues with 10.x
 		url: `/get/apikey`,
 		type: 'POST',
 		crossDomain: true,
-		data: `type=keygen&user=${username}&password=${password}&panorama=${env.panorama}`,
+		data: `type=keygen&username=${username}&password=${password}&panorama=${env.panorama}`,
 		dataType: 'xml',
 		success: function (response) {
 			panosToken = $(response).find('key').text();
