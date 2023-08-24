@@ -27,6 +27,10 @@ async function getInterfaces() {
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
         var hostname = $.parseHTML(row.hostname)[0].innerText;
+        // Skip externally managed firewalls
+        if (env.externallyManagedFirewalls.includes(hostname.replace(`.${env.domain}`, ""))) {
+            return;
+        }
         hostnames.push(hostname);
     });
 
@@ -88,6 +92,10 @@ async function runCommands(commands) {
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
         var hostname = $.parseHTML(row.hostname)[0].innerText;
+        // Skip externally managed firewalls
+        if (env.externallyManagedFirewalls.includes(hostname.replace(`.${env.domain}`, ""))) {
+            return;
+        }
         hostnames.push(hostname);
     });
 
@@ -154,6 +162,10 @@ async function getConfig(format) {
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
         var hostname = $.parseHTML(row.hostname)[0].innerText;
+        // Skip externally managed firewalls
+        if (env.externallyManagedFirewalls.includes(hostname.replace(`.${env.domain}`, ""))) {
+            return;
+        }
         hostnames.push(hostname);
     });
 
