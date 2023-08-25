@@ -89,9 +89,9 @@ function getCredentials() {
 			document.removeEventListener('keypress', handleEnter);
 			$('.modal-credentials__bg').attr('style', 'display: none;');
 			username = $('#username').val();
-			$('#username').val('');
+			$('#username').empty();
 			password = encodeURIComponent($('#password').val());
-			$('#password').val('');
+			$('#password').empty();
 			resolve();
 		}
 		function handleEnter(event) {
@@ -154,7 +154,7 @@ function updateUi() {
 		$('body').toggleClass('noscroll');
 		$('#results-overlay').attr('style', 'display: none;');
 		$('#results').removeAttr('style');
-		$('#results-filter input').val('');
+		$('#results-filter input').empty();
 	});
 
 	// When the user clicks anywhere outside of the modal, close it
@@ -162,7 +162,7 @@ function updateUi() {
 		if (event.target == $('#results-overlay')[0]) {
 			$('body').toggleClass('noscroll');
 			$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
-			$('#results-filter input').val('');
+			$('#results-filter input').empty();
 			$('#results-filter input').attr('placeholder', 'Filter');
 			$('#results').removeAttr('style');
 			$('#results').removeAttr('data-text-type');
@@ -241,11 +241,11 @@ function updateUi() {
 					}
 				});
 			}
-		}, 1000);
+		}, 1500);
 	});
 
 	$('#results-filter button').on('click clear', function () {
-		$('#results-filter input').val('');
+		$('#results-filter input').empty();
 		$('#results-body div').contents().each(function () {
 			$(this).parent().css('display', '');
 		});
@@ -261,8 +261,8 @@ function updateUi() {
 
 	$('.modal-credentials__close').on('click', function () {
 		$('.modal-credentials__bg').attr('style', 'display: none;');
-		$('#username').val('');
-		$('#password').val('');
+		$('#username').empty();
+		$('#password').empty();
 	});
 
 	$('#modal-credentials-button').on('click', function () {
@@ -567,7 +567,7 @@ function getFirewalls() {
 										}
 									}
 									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
-								}, 1000);
+								}, 1500);
 							});
 						});
 
