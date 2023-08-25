@@ -32,8 +32,20 @@ getFirewalls();
 // Refresh firewall table data every 30 seconds
 setInterval(getFirewalls, 30000);
 
+// Disable backspace browser navigation
+$(function () {
+	var regex = /input|select|textarea/i;
+	$(document).bind('keydown keypress', function (event) {
+		if (event.which == 8) { // 8 == backspace
+			if (!regex.test(event.target.tagName) || $(event.target).is(':checkbox') || $(event.target).is(':radio') || $(event.target).is(':submit') || event.target.disabled || event.target.readOnly) {
+				event.preventDefault();
+			}
+		}
+	});
+});
+
+// Limit ctrl/cmd+a selection to results overlay
 function selectText(containerid) {
-	// Limit ctrl/cmd+a selection to results overlay
 	if (document.selection) {
 		var range = document.body.createTextRange();
 		range.moveToElementText(document.getElementById(containerid));
@@ -175,7 +187,7 @@ function updateUi() {
 		}
 	});
 
-	$('#results-filter input').on('keyup change click', function () {
+	$('#results-filter input').on('keyup change', function () {
 		// Pause for a few more characters
 		setTimeout(() => {
 			// Retrieve the input field text
@@ -346,13 +358,13 @@ function getFirewalls() {
 
 						var haState = $(this).children('ha').children('state').text() || 'standalone';
 						if (haState === 'active') {
-							ha_led = "static/img/green_led.png";
+							ha_led = 'static/img/green_led.png';
 						} else if (haState === 'passive') {
-							ha_led = "static/img/yellow_led.png";
+							ha_led = 'static/img/yellow_led.png';
 						} else if (haState !== 'standalone') {
-							ha_led = "static/img/red_led.png";
+							ha_led = 'static/img/red_led.png';
 						} else {
-							ha_led = "static/img/gray_led.png";
+							ha_led = 'static/img/gray_led.png';
 						}
 
 						haState = `<img src="${ha_led}" alt="${haState}" style="padding-right: .2em; vertical-align: middle;"><span style="vertical-align: middle;">${haState.charAt(0).toUpperCase()}${haState.slice(1)}</span>`;
@@ -392,9 +404,14 @@ function getFirewalls() {
 						// Add column search
 						$('#firewalls thead th').each(function () {
 							var title = $(this).text();
+							var id = title.replace(' ', '-').toLowerCase();
 							$(this).html(
-								`<label>${title}</label><br><input class="searchInput" type="search" placeholder="" />`
+								`<label>${title}</label><br><input id="${id}"class="searchInput" type="search" placeholder="" />`
 							);
+
+							document.getElementById(id).addEventListener('search', (event) => {
+								$(`#${id}`).empty().trigger('change');
+							});
 						});
 
 						// Delay showing the thead prematurely
@@ -530,7 +547,7 @@ function getFirewalls() {
 								event.stopPropagation();
 							});
 
-							$('input', this.header()).on('keyup change clear click', function () {
+							$('input', this.header()).on('keyup change', function () {
 								// Pause for a few more characters
 								setTimeout(() => {
 									if (this.value) {
