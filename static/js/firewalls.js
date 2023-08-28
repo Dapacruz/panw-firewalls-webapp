@@ -10,6 +10,8 @@ var password;
 var panosToken;
 var aapToken;
 var authTimeout;
+var tableSearchTimeoutId;
+var resultsSearchTimeoutId;
 const inactivityTimeout = 15 * 60 * 1000;	// 15 minutes
 var env = (function () {
 	var json = null;
@@ -68,7 +70,7 @@ function sleep(n) {
 function clearSearch() {
 	$('.searchInput').each(function () {
 		this.value = '';
-		this.dispatchEvent(new Event('clear'));
+		this.dispatchEvent(new Event('change'));
 	});
 	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 }
@@ -189,7 +191,8 @@ function updateUi() {
 
 	$('#results-filter input').on('keyup change', function () {
 		// Pause for a few more characters
-		setTimeout(() => {
+		clearTimeout(resultsSearchTimeoutId);
+		resultsSearchTimeoutId = setTimeout(() => {
 			// Retrieve the input field text
 			var filter = $(this).val();
 
@@ -241,7 +244,7 @@ function updateUi() {
 					}
 				});
 			}
-		}, 1500);
+		}, 500);
 	});
 
 	$('#results-filter button').on('click clear', function () {
@@ -379,9 +382,7 @@ function getFirewalls() {
 						vSystems = vSystems.sort().join(', <br>');
 
 						if (hostname) {
-							hostname = `${hostname.toLowerCase()}.${env.domain}`;
-							hostname = `<a target="_blank" href="https://${hostname}">${hostname}</a>`;
-
+							hostname = `<a target="_blank" href="https://${hostname}.${env.domain}">${hostname.toUpperCase()}</a>`;
 							tableData.push({
 								hostname: hostname,
 								haState: haState,
@@ -549,7 +550,8 @@ function getFirewalls() {
 
 							$('input', this.header()).on('keyup change', function () {
 								// Pause for a few more characters
-								setTimeout(() => {
+								clearTimeout(tableSearchTimeoutId);
+								tableSearchTimeoutId = setTimeout(() => {
 									if (this.value) {
 										$('#clear-search').removeClass('hide');
 									} else {
@@ -567,7 +569,7 @@ function getFirewalls() {
 										}
 									}
 									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
-								}, 1500);
+								}, 500);
 							});
 						});
 
