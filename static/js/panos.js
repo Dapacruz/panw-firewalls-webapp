@@ -31,7 +31,7 @@ async function getInterfaces() {
         if (env.externallyManagedFirewalls.includes(hostname)) {
             return;
         }
-        hostnames.push(`${hostname}.***REMOVED***`);
+        hostnames.push(`${hostname}.${env.domain}`);
     });
 
     if (hostnames.length == 0) {
@@ -96,7 +96,7 @@ async function runCommands(commands) {
         if (env.externallyManagedFirewalls.includes(hostname)) {
             return;
         }
-        hostnames.push(`${hostname}.***REMOVED***`);
+        hostnames.push(`${hostname}.${env.domain}`);
     });
 
     if (!commands) {
@@ -166,7 +166,7 @@ async function getConfig(format) {
         if (env.externallyManagedFirewalls.includes(hostname)) {
             return;
         }
-        hostnames.push(`${hostname}.***REMOVED***`);
+        hostnames.push(`${hostname}.${env.domain}`);
     });
 
     if (hostnames.length == 0) {
