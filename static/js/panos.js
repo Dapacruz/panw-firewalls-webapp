@@ -26,12 +26,12 @@ async function getInterfaces() {
 
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
-        var hostname = $.parseHTML(row.hostname)[0].innerText;
+        var hostname = $.parseHTML(row.hostname)[0].innerText.toLowerCase();
         // Skip externally managed firewalls
-        if (env.externallyManagedFirewalls.includes(hostname.replace(`.${env.domain}`, ""))) {
+        if (env.externallyManagedFirewalls.includes(hostname)) {
             return;
         }
-        hostnames.push(hostname);
+        hostnames.push(`${hostname}.***REMOVED***`);
     });
 
     if (hostnames.length == 0) {
@@ -91,12 +91,12 @@ async function getInterfaces() {
 async function runCommands(commands) {
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
-        var hostname = $.parseHTML(row.hostname)[0].innerText;
+        var hostname = $.parseHTML(row.hostname)[0].innerText.toLowerCase();
         // Skip externally managed firewalls
-        if (env.externallyManagedFirewalls.includes(hostname.replace(`.${env.domain}`, ""))) {
+        if (env.externallyManagedFirewalls.includes(hostname)) {
             return;
         }
-        hostnames.push(hostname);
+        hostnames.push(`${hostname}.***REMOVED***`);
     });
 
     if (!commands) {
@@ -161,12 +161,12 @@ async function getConfig(format) {
 
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
-        var hostname = $.parseHTML(row.hostname)[0].innerText;
+        var hostname = $.parseHTML(row.hostname)[0].innerText.toLowerCase();
         // Skip externally managed firewalls
-        if (env.externallyManagedFirewalls.includes(hostname.replace(`.${env.domain}`, ""))) {
+        if (env.externallyManagedFirewalls.includes(hostname)) {
             return;
         }
-        hostnames.push(hostname);
+        hostnames.push(`${hostname}.***REMOVED***`);
     });
 
     if (hostnames.length == 0) {

@@ -55,7 +55,7 @@ async function executeAnsiblePlaybook(jobID, extraVars = {}) {
 
     var hostnames = [];
     table.rows({ selected: true }).data().each((row) => {
-        var hostname = $.parseHTML(row.hostname)[0].innerText.replace(`.${env.domain}`, "");
+        var hostname = $.parseHTML(row.hostname)[0].innerText.toLowerCase();
         // Skip externally managed firewalls
         if (env.externallyManagedFirewalls.includes(hostname)) {
             return;

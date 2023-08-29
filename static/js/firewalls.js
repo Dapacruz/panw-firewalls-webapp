@@ -91,10 +91,9 @@ function getCredentials() {
 			document.removeEventListener('keypress', handleEnter);
 			$('.modal-credentials__bg').attr('style', 'display: none;');
 			username = $('#username').val();
-			$('#username').empty();
 			password = encodeURIComponent($('#password').val());
-			$('#password').empty();
 			resolve();
+			$('#password').val('');
 		}
 		function handleEnter(event) {
 			if (event.key === 'Enter') {
@@ -156,7 +155,7 @@ function updateUi() {
 		$('body').toggleClass('noscroll');
 		$('#results-overlay').attr('style', 'display: none;');
 		$('#results').removeAttr('style');
-		$('#results-filter input').empty();
+		$('#results-filter input').val('');
 	});
 
 	// When the user clicks anywhere outside of the modal, close it
@@ -164,7 +163,7 @@ function updateUi() {
 		if (event.target == $('#results-overlay')[0]) {
 			$('body').toggleClass('noscroll');
 			$('#results-overlay').scrollTop(0).attr('style', 'display: none;');
-			$('#results-filter input').empty();
+			$('#results-filter input').val('');
 			$('#results-filter input').attr('placeholder', 'Filter');
 			$('#results').removeAttr('style');
 			$('#results').removeAttr('data-text-type');
@@ -248,7 +247,7 @@ function updateUi() {
 	});
 
 	$('#results-filter button').on('click clear', function () {
-		$('#results-filter input').empty();
+		$('#results-filter input').val('');
 		$('#results-body div').contents().each(function () {
 			$(this).parent().css('display', '');
 		});
@@ -264,8 +263,7 @@ function updateUi() {
 
 	$('.modal-credentials__close').on('click', function () {
 		$('.modal-credentials__bg').attr('style', 'display: none;');
-		$('#username').empty();
-		$('#password').empty();
+		$('#password').val('');
 	});
 
 	$('#modal-credentials-button').on('click', function () {
@@ -407,11 +405,11 @@ function getFirewalls() {
 							var title = $(this).text();
 							var id = title.replace(' ', '-').toLowerCase();
 							$(this).html(
-								`<label>${title}</label><br><input id="${id}"class="searchInput" type="search" placeholder="" />`
+								`<label>${title}</label><br><input id="${id}" class="searchInput" type="search" placeholder="search" />`
 							);
 
 							document.getElementById(id).addEventListener('search', (event) => {
-								$(`#${id}`).empty().trigger('change');
+								$(`#${id}`).trigger('change');
 							});
 						});
 

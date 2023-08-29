@@ -203,6 +203,7 @@ td.haOther {
 
 .searchInput {
 	margin-top: 5px;
+	padding-left: 5px;
 	height: 17px;
 	border: 0;
 	width: 65%;
