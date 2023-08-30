@@ -546,7 +546,7 @@ function getFirewalls() {
 							});
 
 							$('input', this.header()).on('keyup change', function (event) {
-								// Clear the timeout ofr keyup events
+								// Clear the timeout for keyup events
 								if (event.type === 'keyup') {
 									clearTimeout(tableSearchTimeoutId);
 								}
@@ -556,6 +556,11 @@ function getFirewalls() {
 										$('#clear-search').removeClass('hide');
 									} else {
 										$('#clear-search').addClass('hide');
+										$('.searchInput').each(function () {
+											if (this.value !== '') {
+												$('#clear-search').removeClass('hide');
+											}
+										});
 									}
 
 									if (this.value.startsWith('!')) {
