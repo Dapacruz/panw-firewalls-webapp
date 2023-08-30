@@ -70,9 +70,8 @@ function sleep(n) {
 function clearSearch() {
 	$('.searchInput').each(function () {
 		this.value = '';
-		this.dispatchEvent(new Event('change'));
+		$(`#${this.id}`).change();
 	});
-	$('tbody tr.dtrg-start>td:Contains("No group")').remove();
 }
 
 function getCredentials() {
@@ -243,7 +242,7 @@ function updateUi() {
 					}
 				});
 			}
-		}, 500);
+		}, 750);
 	});
 
 	$('#results-filter button').on('click clear', function () {
@@ -409,7 +408,7 @@ function getFirewalls() {
 							);
 
 							document.getElementById(id).addEventListener('search', (event) => {
-								$(`#${id}`).trigger('change');
+								$(`#${id}`).change();
 							});
 						});
 
@@ -546,9 +545,12 @@ function getFirewalls() {
 								event.stopPropagation();
 							});
 
-							$('input', this.header()).on('keyup change', function () {
+							$('input', this.header()).on('keyup change', function (event) {
+								// Clear the timeout ofr keyup events
+								if (event.type === 'keyup') {
+									clearTimeout(tableSearchTimeoutId);
+								}
 								// Pause for a few more characters
-								clearTimeout(tableSearchTimeoutId);
 								tableSearchTimeoutId = setTimeout(() => {
 									if (this.value) {
 										$('#clear-search').removeClass('hide');
@@ -567,7 +569,7 @@ function getFirewalls() {
 										}
 									}
 									$('tbody tr.dtrg-start>td:Contains("No group")').remove();
-								}, 500);
+								}, 750);
 							});
 						});
 
