@@ -149,6 +149,11 @@ function resetInactivityTimeout() {
 }
 
 function updateUi() {
+	// Update search results when clicking input clear (x)
+	document.getElementById('results-filter-input').addEventListener('search', () => {
+		$('#results-filter-input').change();
+	});
+
 	// When the user clicks on <span> (x), close the modal
 	$('span.close').click(function () {
 		$('body').toggleClass('noscroll');
@@ -187,9 +192,12 @@ function updateUi() {
 		}
 	});
 
-	$('#results-filter input').on('keyup change', function () {
+	$('#results-filter input').on('keyup change', function (event) {
+		// Clear the timeout for keyup events
+		if (event.type === 'keyup') {
+			clearTimeout(tableSearchTimeoutId);
+		}
 		// Pause for a few more characters
-		clearTimeout(resultsSearchTimeoutId);
 		resultsSearchTimeoutId = setTimeout(() => {
 			// Retrieve the input field text
 			var filter = $(this).val();
@@ -407,7 +415,8 @@ function getFirewalls() {
 								`<label>${title}</label><br><input id="${id}" class="searchInput" type="search" placeholder="search" />`
 							);
 
-							document.getElementById(id).addEventListener('search', (event) => {
+							// Update search results when clicking input clear (x)
+							document.getElementById(id).addEventListener('search', () => {
 								$(`#${id}`).change();
 							});
 						});
@@ -707,4 +716,4 @@ function getFirewalls() {
 			$('#events').text('Connection to Panorama failed!');
 		}
 	});
-}
+};
