@@ -112,7 +112,7 @@ async function runCommands(commands) {
     $.ajax({
         url: '/run/command',
         type: 'POST',
-        data: `username=${username}&password=${password}&commands=${commands.join(',')}&firewalls=${hostnames.join(',')}`,
+        data: `username=${username}&password=${password}&commands=${encodeURIComponent(commands.join(','))}&firewalls=${hostnames.join(',')}`,
         dataType: 'text',
         success: function (response) {
             $('#results-filter input').attr('placeholder', 'Filter');
