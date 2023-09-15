@@ -617,7 +617,7 @@ function getFirewalls() {
 									<li><h3 style="color:#fa582d;">Ansible Playbooks</h3></li>
 									<li><a id="menu-config-local-admins">Configure Local Admins</a></li>
 									<li><a id="menu-get-device-state-snapshot">Get Device State Snapshot</a></li>
-									<li><a onclick="executeAnsiblePlaybook('39')">Upgrade Dynamic Content</a></li>
+									<li><a onclick="executeAnsiblePlaybook('132')">Upgrade Dynamic Content</a></li>
 									</ul>
 									</div>
 								</div>

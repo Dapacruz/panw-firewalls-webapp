@@ -9,7 +9,7 @@ $('#modal-config-local-admins-button').on('click', function () {
     $('.modal-config-local-admins__bg').attr('style', 'display: none;');
     $('.modal-config-local-admins__input').val('');
 
-    configureLocalAdmins('43', password);
+    configureLocalAdmins('125', password);
 });
 
 $('.modal-get-device-state-snapshot__close').on('click', function () {
@@ -24,7 +24,7 @@ $('#modal-get-device-state-snapshot-button').on('click', function () {
     $('#modal-get-device-state-snapshot__yes').prop('checked', false);
     $('#modal-get-device-state-snapshot__no').prop('checked', true);
 
-    getDeviceState('47', saveConfig);
+    getDeviceState('127', saveConfig);
 });
 
 function configureLocalAdmins(jobID, password) {
@@ -75,9 +75,8 @@ async function executeAnsiblePlaybook(jobID, extraVars = {}) {
     }
 
     $('#loading-progressbar').attr('style', 'display: block;');
-
-    extraVars = {
-        limit: hostnames.join(','),
+    extraVars["hosts_limit"] = hostnames.join(',');
+    var data = {
         extra_vars: extraVars
     };
     $.ajax({
@@ -87,7 +86,7 @@ async function executeAnsiblePlaybook(jobID, extraVars = {}) {
         headers: {
             "Authorization": "Basic " + aapToken
         },
-        data: JSON.stringify(extraVars),
+        data: JSON.stringify(data),
         contentType: 'application/json',
         dataType: 'json',
         success: async (response) => {
