@@ -83,7 +83,7 @@ async function getInterfaces() {
         },
         error: function (xhr, status, error) {
             $('#loading-progressbar').attr('style', 'display: none;');
-            window.alert('Something went seriously wrong');
+            window.alert(`Something went seriously wrong:\n${xhr.responseText})`);
         }
     });
 }
@@ -146,9 +146,10 @@ async function runCommands(commands) {
             $('#loading-progressbar').attr('style', 'display: none;');
             $('body').toggleClass('noscroll');
         },
-        error: function (xhr, status, error) {
+        error: function (xhr) {
             $('#loading-progressbar').attr('style', 'display: none;');
-            window.alert(`Something went seriously wrong (${error}).`);
+            console.log(xhr.responseText);
+            window.alert(`Something went seriously wrong:\n${xhr.responseText})`);
         }
     });
 
@@ -234,7 +235,7 @@ async function getConfig(format) {
         },
         error: function (xhr, status, error) {
             $('#loading-progressbar').attr('style', 'display: none;');
-            window.alert('Something went seriously wrong');
+            window.alert(`Something went seriously wrong:\n${xhr.responseText})`);
         }
     });
 

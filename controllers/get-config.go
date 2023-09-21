@@ -1,10 +1,9 @@
 package controllers
 
 import (
-	"os/exec"
-	"fmt"
 	"bytes"
-	"log"
+	"fmt"
+	"os/exec"
 
 	"github.com/astaxie/beego"
 )
@@ -14,16 +13,16 @@ type GetConfig struct {
 }
 
 type GetConfigRequest struct {
-	Format string `form:"format"`
-	Key string `form:"key"`
-	Username string `form:"username"`
-	Password string `form:"password"`
+	Format    string `form:"format"`
+	Key       string `form:"key"`
+	Username  string `form:"username"`
+	Password  string `form:"password"`
 	Firewalls string `form:"firewalls"`
 }
 
 func (c *GetConfig) Post() {
 	request := GetConfigRequest{}
-    if err := c.ParseForm(&request); err != nil {
+	if err := c.ParseForm(&request); err != nil {
 		fmt.Println(err)
 	}
 
@@ -39,10 +38,9 @@ func (c *GetConfig) Post() {
 	cmd.Stderr = &errb
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(errb.String())
+		c.CustomAbort(500, errb.String())
 	}
-
-	// fmt.Println("out:", outb.String(), "err:", errb.String())
 
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }

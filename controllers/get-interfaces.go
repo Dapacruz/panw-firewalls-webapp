@@ -1,10 +1,9 @@
 package controllers
 
 import (
-	"os/exec"
-	"fmt"
 	"bytes"
-	"log"
+	"fmt"
+	"os/exec"
 
 	"github.com/astaxie/beego"
 )
@@ -14,13 +13,13 @@ type GetInterfaces struct {
 }
 
 type GetInterfacesRequest struct {
-	Key string `form:"key"`
+	Key       string `form:"key"`
 	Firewalls string `form:"firewalls"`
 }
 
 func (c *GetInterfaces) Post() {
 	request := GetInterfacesRequest{}
-    if err := c.ParseForm(&request); err != nil {
+	if err := c.ParseForm(&request); err != nil {
 		fmt.Println(err)
 	}
 
@@ -30,10 +29,9 @@ func (c *GetInterfaces) Post() {
 	cmd.Stderr = &errb
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(errb.String())
+		c.CustomAbort(500, errb.String())
 	}
-
-	// fmt.Println("out:", outb.String(), "err:", errb.String())
 
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }

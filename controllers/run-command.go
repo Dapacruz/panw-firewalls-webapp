@@ -3,7 +3,6 @@ package controllers
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 
@@ -40,10 +39,9 @@ func (c *RunCommand) Post() {
 	cmd.Stderr = &errb
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(errb.String())
+		c.CustomAbort(500, errb.String())
 	}
-
-	fmt.Println("out:", outb.String(), "err:", errb.String())
 
 	c.Ctx.ResponseWriter.Write([]byte(outb.String()))
 }

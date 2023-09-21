@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/astaxie/beego"
@@ -24,6 +23,7 @@ func (c *GetApiKey) Post() {
 	request := GetApiKeyRequest{}
 	if err := c.ParseForm(&request); err != nil {
 		fmt.Println(err)
+		c.CustomAbort(500, err.Error())
 	}
 
 	tr := &http.Transport{
@@ -35,7 +35,7 @@ func (c *GetApiKey) Post() {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println(err)
-		panic(err)
+		c.CustomAbort(500, err.Error())
 	}
 
 	q := req.URL.Query()
@@ -48,19 +48,19 @@ func (c *GetApiKey) Post() {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
-		panic(err)
+		c.CustomAbort(500, err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		fmt.Println(err)
-		log.Fatal(resp.Status)
+		fmt.Println(resp.Status)
+		c.CustomAbort(resp.StatusCode, resp.Status)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
-		panic(err)
+		c.CustomAbort(500, err.Error())
 	}
 
 	c.Ctx.ResponseWriter.Write(respBody)

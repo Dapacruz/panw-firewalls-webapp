@@ -167,7 +167,7 @@ async function executeAnsiblePlaybook(jobID, extraVars = {}) {
         },
         error: (xhr, status, error) => {
             $('#loading-progressbar').attr('style', 'display: none;');
-            window.alert('Something went seriously wrong');
+            window.alert(`Something went seriously wrong:\n${xhr.responseText})`);
         }
     });
 }
