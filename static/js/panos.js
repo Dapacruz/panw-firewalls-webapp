@@ -122,7 +122,7 @@ async function runCommands(commands) {
             response.split('\n').forEach(function (val) {
                 if (val == '') {
                     modifiedResponse.push(`<br>`);
-                } else if (val.includes(env.domain)) {
+                } else if (val.endsWith(`${env.domain} ***`)) {
                     modifiedResponse.push(`<div class='modal-run-cmds__hostname'>${val}</div>`);
                 } else if (val.startsWith('*** ')) {
                     modifiedResponse.push(`<div class='modal-run-cmds__command'>${val}</div>`);

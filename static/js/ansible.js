@@ -49,7 +49,7 @@ async function getDeviceState(jobID, saveConfig) {
     executeAnsiblePlaybook(jobID, extra_vars);
 }
 
-async function executeAnsiblePlaybook(jobID, extraVars = {}) {
+async function executeAnsiblePlaybook(jobID, extra_vars = {}) {
     var checkbox = $('.toggler');
     checkbox.prop('checked', false);
 
@@ -75,9 +75,12 @@ async function executeAnsiblePlaybook(jobID, extraVars = {}) {
     }
 
     $('#loading-progressbar').attr('style', 'display: block;');
-    extraVars["hosts_limit"] = hostnames.join(',');
+    // TODO: Need to fix var limit of 1024 chars
+    // extra_vars['hosts_limit'] = 'all';
+    extra_vars['hosts_limit'] = hostnames.join(',');
     var data = {
-        extra_vars: extraVars
+        // limit: hostnames.join(','),
+        extra_vars: extra_vars
     };
     $.ajax({
         url: `https://${env.ansible_tower}/api/v2/job_templates/${jobID}/launch/`,
@@ -167,7 +170,7 @@ async function executeAnsiblePlaybook(jobID, extraVars = {}) {
         },
         error: (xhr, status, error) => {
             $('#loading-progressbar').attr('style', 'display: none;');
-            window.alert(`Something went seriously wrong:\n${xhr.responseText})`);
+            window.alert(`Something went seriously wrong`);
         }
     });
 }

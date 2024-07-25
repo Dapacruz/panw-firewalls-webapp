@@ -412,7 +412,7 @@ function getFirewalls() {
 							var title = $(this).text();
 							var id = title.replace(' ', '-').toLowerCase();
 							$(this).html(
-								`<label>${title}</label><br><input id="${id}" class="searchInput" type="search" placeholder="search" />`
+								`<label>${title}</label><br><input id="${id}" class="searchInput" type="search" placeholder="search"/>`
 							);
 
 							// Update search results when clicking input clear (x)
@@ -554,6 +554,11 @@ function getFirewalls() {
 								event.stopPropagation();
 							});
 
+							$('input', this.header()).on('keydown', function (event) {
+								if (event.keyCode == 13) {
+								    event.preventDefault();
+								}
+							});
 							$('input', this.header()).on('keyup change', function (event) {
 								// Clear the timeout for keyup events
 								if (event.type === 'keyup') {

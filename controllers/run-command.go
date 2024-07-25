@@ -27,7 +27,7 @@ func (c *RunCommand) Post() {
 	}
 
 	firewalls := strings.Split(request.Firewalls, ",")
-	args := []string{"firewall", "run", "commands", "-K", "-t", "40", "--user", request.Username, "--password", request.Password, "--command"}
+	args := []string{"firewall", "run", "commands", "-K", "-t", "60", "--user", request.Username, "--password", request.Password, "--command"}
 	args = append(args, request.Commands)
 	args = append(args, firewalls...)
 
