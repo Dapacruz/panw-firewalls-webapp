@@ -1,0 +1,98 @@
+/* Dark mode styles */
+body.dark-mode {
+    background-color: #121212;
+    color: #d3d3d3;
+}
+
+.dark-mode .modal div,
+.dark-mode .modal input,
+.dark-mode .modal-credentials__bg pre {
+    background-color: #2a2a2a;
+    color: #d3d3d3;
+}
+
+.dark-mode .modal-get-device-state-snapshot__bg div,
+.dark-mode .modal-get-device-state-snapshot__bg p,
+.dark-mode .modal-get-device-state-snapshot__bg label,
+.dark-mode .modal-get-device-state-snapshot__bg input {
+    background-color: #2a2a2a;
+    color: #d3d3d3;
+}
+
+.dark-mode .modal-config-local-admins__bg div,
+.dark-mode .modal-config-local-admins__bg label,
+.dark-mode .modal-config-local-admins__bg input {
+    background-color: #2a2a2a;
+    color: #d3d3d3;
+}
+
+.dark-mode .modal-run-cmds__bg div,
+.dark-mode .modal-run-cmds__bg label,
+.dark-mode .modal-run-cmds__bg textarea {
+    background-color: #2a2a2a;
+    color: #d3d3d3;
+}
+
+.dark-mode .modal-credentials__bg div,
+.dark-mode .modal-credentials__bg input {
+    background-color: #2a2a2a;
+    color: #d3d3d3;
+}
+
+.dark-mode .navbar {
+    background-color: #333;
+}
+
+.dark-mode .button {
+    background-color: #555;
+    color: #d3d3d3;
+}
+
+.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background-color: #333 !important;
+    color: #fff !important;
+}
+
+.dark-mode .dataTables_wrapper input.searchInput,
+.dark-mode .dataTables_wrapper .dataTables_length select {
+    background-color: #444 !important;
+    color: #fff !important;
+}
+
+/* Subtle highlight for sorted column */
+.dark-mode .dataTables_wrapper table.dataTable thead th.sorting,
+.dark-mode .dataTables_wrapper table.dataTable thead th.sorting_asc,
+.dark-mode .dataTables_wrapper table.dataTable thead th.sorting_desc {
+    background-color: #2a2a2a !important; /* Subtler highlight */
+    color: #d3d3d3 !important;
+}
+
+/* Sorted column cells in the body */
+.dark-mode .dataTables_wrapper table.dataTable tbody td.sorting_1,
+.dark-mode .dataTables_wrapper table.dataTable tbody td.sorting_2,
+.dark-mode .dataTables_wrapper table.dataTable tbody td.sorting_3 {
+    background-color: #333 !important; /* Slightly lighter for sorted cells */
+}
+
+/* Dark Mode: Odd and even row highlights */
+.dark-mode .dataTables_wrapper table.dataTable tbody tr:nth-child(odd) {
+    background-color: #1e1e1e !important; /* Darker background for odd rows */
+}
+
+.dark-mode .dataTables_wrapper table.dataTable tbody tr:nth-child(even) {
+    background-color: #2a2a2a !important; /* Lighter background for even rows */
+}
+
+/* Dark Mode: Force highlight for selected rows */
+.dark-mode .dataTables_wrapper table.dataTable tbody tr.selected {
+    background-color: #444 !important; /* Darker selected row */
+    color: #d3d3d3 !important; /* Ensure white text */
+}
+
+/* Sorted column cells in the body */
+.dark-mode .dataTables_wrapper table.dataTable tbody tr.selected td.sorting_1,
+.dark-mode .dataTables_wrapper table.dataTable tbody tr.selected td.sorting_2,
+.dark-mode .dataTables_wrapper table.dataTable tbody tr.selected td.sorting_3 {
+    background-color: #444 !important; /* Slightly lighter for selected sorted cells */
+    color: #d3d3d3 !important; /* Ensure text is visible */
+}

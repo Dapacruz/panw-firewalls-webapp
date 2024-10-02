@@ -27,6 +27,44 @@ var env = (function () {
 	return json;
 })();
 
+document.addEventListener("DOMContentLoaded", function() {
+    const toggleSwitch = document.querySelector("#dark-mode-toggle");
+
+    // Load saved dark mode setting
+    const isDarkMode = localStorage.getItem('dark-mode');
+    if (isDarkMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+        toggleSwitch.checked = true;
+    }
+});
+
+
+function switchLogo(isDarkMode) {
+    const logo = document.querySelector("#logo");
+    if (isDarkMode) {
+        logo.src = "/static/img/palo-alto-networks-logo-dark.png"; // Dark mode logo
+    } else {
+        logo.src = "/static/img/palo-alto-networks-logo.png"; // Light mode logo
+    }
+}
+
+// Toggle dark mode on/off
+const toggleSwitch = document.querySelector("#dark-mode-toggle");
+toggleSwitch.addEventListener("change", function() {
+    if (this.checked) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('dark-mode', 'enabled');
+    } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('dark-mode', 'disabled');
+    }
+    switchLogo(this.checked);
+});
+
+// On page load, check if dark mode is enabled and switch logo accordingly
+const isDarkMode = localStorage.getItem('dark-mode') === 'enabled';
+switchLogo(isDarkMode);
+
 updateUi();
 
 getFirewalls();
