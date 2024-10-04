@@ -13,6 +13,8 @@ var authTimeout;
 var tableSearchTimeoutId;
 var resultsSearchTimeoutId;
 const inactivityTimeout = 15 * 60 * 1000;	// 15 minutes
+const toggleSwitch = document.querySelector("#dark-mode-toggle");
+const logo = document.querySelector("#logo");
 var env = (function () {
 	var json = null;
 	$.ajax({
@@ -27,43 +29,29 @@ var env = (function () {
 	return json;
 })();
 
+// Set dark mode on/off on page load
 document.addEventListener("DOMContentLoaded", function() {
-    const toggleSwitch = document.querySelector("#dark-mode-toggle");
-
-    // Load saved dark mode setting
-    const isDarkMode = localStorage.getItem('dark-mode');
-    if (isDarkMode === 'enabled') {
-        document.body.classList.add('dark-mode');
-        toggleSwitch.checked = true;
+    const isDarkMode = localStorage.getItem("dark-mode") || "true";
+    if (isDarkMode === "false") {
+        document.body.classList.remove("dark-mode");
+        toggleSwitch.checked = false;
+        logo.src = "/static/img/palo-alto-networks-logo.png";
     }
 });
 
-
-function switchLogo(isDarkMode) {
-    const logo = document.querySelector("#logo");
-    if (isDarkMode) {
-        logo.src = "/static/img/palo-alto-networks-logo-dark.png"; // Dark mode logo
-    } else {
-        logo.src = "/static/img/palo-alto-networks-logo.png"; // Light mode logo
-    }
-}
 
 // Toggle dark mode on/off
-const toggleSwitch = document.querySelector("#dark-mode-toggle");
 toggleSwitch.addEventListener("change", function() {
     if (this.checked) {
-        document.body.classList.add('dark-mode');
-        localStorage.setItem('dark-mode', 'enabled');
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("dark-mode", "true");
+        logo.src = "/static/img/palo-alto-networks-logo-dark.png";
     } else {
-        document.body.classList.remove('dark-mode');
-        localStorage.setItem('dark-mode', 'disabled');
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("dark-mode", "false");
+        logo.src = "/static/img/palo-alto-networks-logo.png";
     }
-    switchLogo(this.checked);
 });
-
-// On page load, check if dark mode is enabled and switch logo accordingly
-const isDarkMode = localStorage.getItem('dark-mode') === 'enabled';
-switchLogo(isDarkMode);
 
 updateUi();
 

@@ -299,7 +299,7 @@ td.haOther {
     margin: 0;
     background: #ebebeb;
     border-radius: 30px;
-    box-shadow: inset 0px 5px 15px rgba(0,0,0,0.4), inset 0px -5px 15px rgba(255,255,255,0.4);
+    box-shadow: inset 0px 5px 15px rgba(0, 0, 0, 0.4),  inset 0px -5px 15px rgba(255, 255, 255, 0.4);
     cursor: pointer;
     transition: 0.3s;
 }
@@ -312,9 +312,9 @@ td.haOther {
 	position: absolute;
 	top: 2.5px;
 	left: 2.5px;
-	background: linear-gradient(180deg,#ffcc89,#d8860b);
+	background: linear-gradient(180deg, #ffcc89, #d8860b);
 	border-radius: 25px;
-	box-shadow: 0px 5px 10px rgba(0,0,0,0.2);
+	box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
 	transition: 0.3s;
 }
 
@@ -331,7 +331,7 @@ td.haOther {
 .dark-mode-switch:checked + .dark-mode-label:after {
 	left: 72.5px;
 	transform: translateX(-100%);
-	background: linear-gradient(180deg,#777,#3a3a3a);
+	background: linear-gradient(180deg, #777, #3a3a3a);
 }
 
 .dark-mode-label:active:after{
@@ -346,21 +346,21 @@ td.haOther {
 }
 
 .dark-mode-label svg.sun {
-	left:7.5px;
-	fill:#fff;
+	left: 7.5px;
+	fill: #fff;
 	transition: 0.3s;
 }
 
 .dark-mode-label svg.moon {
-	left:52.5px;
-	fill:#7e7e7e;
+	left: 52.5px;
+	fill: #7e7e7e;
 	transition: 0.3s;
 }
 
 .dark-mode-switch:checked + .dark-mode-label svg.sun {
-	fill:#7e7e7e;
+	fill: #7e7e7e;
 }
 
 .dark-mode-switch:checked + .dark-mode-label svg.moon {
-	fill:#fff;
+	fill: #fff;
 }
