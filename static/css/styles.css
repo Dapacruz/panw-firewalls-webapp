@@ -282,10 +282,9 @@ td.haOther {
 }
 
 .dark-mode-container {
-    position: fixed;
+    position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 100;
     display: flex; /* Use flexbox to align the label inside the container */
     justify-content: flex-end;
     align-items: center;

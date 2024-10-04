@@ -53,16 +53,16 @@ body.dark-mode {
     color: #fff !important;
 }
 
-.dark-mode .dataTables_wrapper input,
-.dark-mode .dataTables_wrapper .dataTables_length select {
+.dark-mode input,
+.dark-mode .dataTables_length select {
     background-color: #444 !important;
     color: #fff !important;
 }
 
-.dark-mode .dataTables_wrapper input:-webkit-autofill,
-.dark-mode .dataTables_wrapper input:-webkit-autofill:hover, 
-.dark-mode .dataTables_wrapper input:-webkit-autofill:active, 
-.dark-mode .dataTables_wrapper input:-webkit-autofill:focus {
+.dark-mode input:-webkit-autofill,
+.dark-mode input:-webkit-autofill:hover, 
+.dark-mode input:-webkit-autofill:active, 
+.dark-mode input:-webkit-autofill:focus {
     -webkit-text-fill-color: #fff !important;
     -webkit-box-shadow: 0 0 0px 1000px #444  inset;
 }
