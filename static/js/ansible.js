@@ -9,7 +9,7 @@ $('#modal-config-local-admins-button').on('click', function () {
     $('.modal-config-local-admins__bg').attr('style', 'display: none;');
     $('.modal-config-local-admins__input').val('');
 
-    configureLocalAdmins('125', password);
+    configureLocalAdmins(env.ansible_templates.configure_local_admins, password);
 });
 
 $('.modal-get-device-state-snapshot__close').on('click', function () {
@@ -24,7 +24,7 @@ $('#modal-get-device-state-snapshot-button').on('click', function () {
     $('#modal-get-device-state-snapshot__yes').prop('checked', false);
     $('#modal-get-device-state-snapshot__no').prop('checked', true);
 
-    getDeviceState('127', saveConfig);
+    getDeviceState(env.ansible_templates.get_device_state, saveConfig);
 });
 
 function configureLocalAdmins(jobID, password) {
